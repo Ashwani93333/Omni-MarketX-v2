@@ -60,6 +60,7 @@ export const leaderboardRows: LeaderboardEntry[] = [
     profit: 12482.4,
     trades: 342,
     change: 0,
+    followers: 12840,
   },
   {
     id: "lb-002",
@@ -69,6 +70,7 @@ export const leaderboardRows: LeaderboardEntry[] = [
     profit: 9865.12,
     trades: 221,
     change: 2,
+    followers: 9340,
   },
   {
     id: "lb-003",
@@ -78,6 +80,7 @@ export const leaderboardRows: LeaderboardEntry[] = [
     profit: 8754.33,
     trades: 410,
     change: -1,
+    followers: 8760,
   },
   {
     id: "lb-004",
@@ -87,6 +90,7 @@ export const leaderboardRows: LeaderboardEntry[] = [
     profit: 7421.58,
     trades: 298,
     change: 3,
+    followers: 5120,
   },
   {
     id: "lb-005",
@@ -96,6 +100,7 @@ export const leaderboardRows: LeaderboardEntry[] = [
     profit: 6874.2,
     trades: 176,
     change: -2,
+    followers: 4210,
   },
   {
     id: "lb-006",
@@ -105,6 +110,7 @@ export const leaderboardRows: LeaderboardEntry[] = [
     profit: 5231.77,
     trades: 364,
     change: 1,
+    followers: 3110,
   },
   {
     id: "lb-007",
@@ -114,6 +120,7 @@ export const leaderboardRows: LeaderboardEntry[] = [
     profit: 4412.9,
     trades: 142,
     change: 4,
+    followers: 2030,
   },
   {
     id: "lb-008",
@@ -123,6 +130,7 @@ export const leaderboardRows: LeaderboardEntry[] = [
     profit: 3890.44,
     trades: 201,
     change: -3,
+    followers: 1120,
   },
 ];
 

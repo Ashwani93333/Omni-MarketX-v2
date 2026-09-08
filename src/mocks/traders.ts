@@ -96,6 +96,11 @@ function buildProfile(user: User): TraderProfile {
       followers: Math.round(25 + rng() * 500),
       following: Math.round(20 + rng() * 160),
     },
+    reputation: {
+      score: Math.round(600 + rng() * 400),
+      streak: Math.round(3 + rng() * 38),
+      weeksProfitable: Math.round(14 + rng() * 38),
+    },
     recentPositions: buildPositions(user.id),
   };
 }

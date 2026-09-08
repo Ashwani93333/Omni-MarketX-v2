@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { FollowButton } from "@/components/social/follow-button";
+import { CopyTraderButton } from "@/components/social/copy-trader-button";
+import { ReputationCard } from "@/components/social/reputation-score";
 import { Avatar } from "@/components/ui/avatar";
 import {
   Card,
@@ -106,9 +108,22 @@ export function TraderProfileClient({ userId }: { userId: string }) {
             </div>
           </div>
 
-          {!isMe && <FollowButton userId={profile.id} className="shrink-0" />}
+          {!isMe && (
+            <div className="flex shrink-0 items-center gap-2">
+              <CopyTraderButton
+                trader={{
+                  userId: profile.id,
+                  displayName: profile.user.displayName,
+                  initials: profile.user.initials,
+                }}
+              />
+              <FollowButton userId={profile.id} />
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      <ReputationCard profile={profile} />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {stats.map((stat) => {

@@ -501,8 +501,202 @@ None — P1 roadmap complete.
 
 ---
 
-## 12. Feature roadmap — P2 (deferred)
+## 12. P2 (differentiation) — deferred roadmap
 
-Per the P2 spec: social profiles with identity/token badges, notifications with
-per-settings, DM inbox, fiat payments (Stripe/Plaid), SDK/API docs, copy-trade
-autotrading. Not started.
+- Copy Trading (demo), Create Market, AI Market Assistant, Market News, AI Market
+  Summary, Market Sentiment, Personalized Feed, Trader Reputation Score, Advanced
+  Leaderboards, Referral/Reward system.
+- **Scope decision (per user): build P2 in batches but skip Create Market.**
+
+---
+
+## 13. P2 batch 1 — AI features (Summary, Sentiment, Assistant)
+
+### 13.1 Types
+**File:** `src/types/index.ts` — added `AiTone`, `MarketAiSummary`,
+`MarketSentiment`, `SentimentDriver`, `AiMessage`.
+
+### 13.2 AI service
+**File:** `src/services/ai.service.ts`
+
+Deterministic generators over the shared PRNG (`hashString`/`createRng`):
+- `getAiSummary(market, salt?)` — headline + 3 bullets chosen from bullish / bearish /
+  neutral templates (tone derived from probability), with a model-confidence score.
+  Salt lets the UI "regenerate" fresh content client-side.
+- `getMarketSentiment(market)` — YES/NO dollar-split (probability ±6pt jitter) and the
+  top 3 weighted drivers from a catalyst pool.
+- `getAssistantReply(market, prompt, history)` — intent-matched canned answers (buy YES,
+  NO side, summary, catalysts, risks) that reference the real market price/probability.
+
+### 13.3 UI
+**Files:** `src/components/ai/ai-summary-card.tsx`,
+`src/components/ai/ai-assistant-dialog.tsx`,
+`src/components/market/market-sentiment.tsx`
+
+- **AI Market Summary** — gradient card in the market main column (below the chart):
+  tone chip (bullish/bearish/neutral), headline, bullets, confidence, regenerate.
+- **Market Sentiment** — rail card: YES/NO split bar, direction label, weighted driver
+  bars. Sits above Market Alerts.
+- **AI Assistant** — "Ask AI" button in the market header opens a chat modal with
+  suggested prompts; replies are typed, intent-matched, and priced from the market.
+
+### 13.4 Verification
+| Check | Result |
+| --- | --- |
+| `npx eslint <changed files>` | 0 problems (fixed 1 purity lint error → ref-based ids) |
+| `npm run build` | ✓ Compiled (6.7s) · ✓ TypeScript passed · 23 routes unchanged |
+
+### 13.5 Still to build (P2)
+Market News, Trader Reputation Score, Copy Trading (demo), Advanced Leaderboards,
+Referral/Reward system, Personalized Feed. (Create Market — intentionally skipped.)
+
+---
+
+## 14. P2 batch 2 — Market News
+
+### 14.1 Types
+**File:** `src/types/index.ts` — added `MarketNewsArticle` (source, headline, excerpt,
+impact HIGH/MEDIUM/LOW, sentiment, minutesAgo, likes, comments).
+
+### 14.2 Service
+**File:** `src/services/news.service.ts`
+
+Deterministic per-market news feed: headlines/excerpts templated to the market's topic
+(crypto / rate policy / semiconductors / earnings / regulation — derived from the title),
+random-but-stable source + impact + sentiment, and relative ages. `getMarketNews(market, limit)`.
+
+### 14.3 UI
+**File:** `src/components/market/market-news.tsx` — "Market News" card at the bottom of
+the market main column. Each item: source + impact chip + sentiment + relative time,
+bold headline, 2-line excerpt, like/comment counts. Link hover state → `#` (demo).
+
+### 14.4 Verification
+| Check | Result |
+| --- | --- |
+| `npx eslint <changed files>` | 0 problems |
+| `npm run build` | ✓ Compiled (3.7s) · ✓ TypeScript passed (fixed 1 widening error via explicit return type) · 23 routes |
+
+### 14.5 Still to build (P2)
+Trader Reputation Score, Copy Trading (demo), Advanced Leaderboards,
+Referral/Reward system, Personalized Feed. (Create Market — intentionally skipped.)
+
+---
+
+## 15. P2 batch 3 — Reputation, Copy Trading (demo), Advanced Leaderboards
+
+### 15.1 Trader Reputation Score
+**Files:** `src/types/index.ts`, `src/mocks/traders.ts`,
+`src/components/social/reputation-score.tsx`
+
+Deterministic per-trader reputation seed (score /1000, weekly-win streak, profitable
+weeks). Card on each `/users/[userId]` page: big score, tier badge (Rookie → Elite),
+and a 4-bar breakdown — Trade Success (win rate), Consistency, Streak, Influence.
+
+### 15.2 Copy Trading (demo)
+**Files:** `src/store/copy-store.ts` (`omx-copy-trading`),
+`src/components/social/copy-trader-button.tsx`,
+`src/components/portfolio/copy-trading-panel.tsx`
+
+- Copy Trader button on trader profiles opens a modal: choose allocation 1%/5%/10%,
+  start/stop with toasts (persisted, max-free via store).
+- Copy Trading card in the portfolio rail lists active copies (avatar, trader link,
+  allocation chip, Stop) or prompts to pick one from the leaderboard.
+
+### 15.3 Advanced Leaderboards
+**Files:** `src/types/index.ts` (followers on `LeaderboardEntry`),
+`src/mocks/leaderboard.ts`, `src/components/leaderboard/leaderboard-item.tsx`,
+`src/app/(dashboard)/leaderboard/page.tsx`
+
+- **Period tabs are now functional**: each period applies a deterministic multiplier +
+  per-entry PRNG jitter, so Daily/Weekly/Monthly produce different, stable rankings.
+- **New "Most Followed" ranking** (leaderboard rows now carry follower counts with a
+  followers override column). "Most Active" now sorts by trades × change-weighted recency.
+- **Top-3 podium**: avatars + metric + rank cards above the ranked list, with the leader
+  highlighted. Title shows active period + filter.
+
+### 15.4 Verification
+| Check | Result |
+| --- | --- |
+| `npx eslint <changed files>` | 0 problems |
+| `npm run build` | ✓ Compiled (5.1s) · ✓ TypeScript passed (fixed 1 button variant) · 23 routes |
+
+### 15.5 Still to build (P2)
+Referral/Reward system, Personalized Feed. (Create Market — intentionally skipped.)
+
+---
+
+## 16. P2 batch 4 — Personalized Feed + Referral/Reward system (finishes P2)
+
+### Audit (all 9 requested features vs. app)
+| Feature | Status |
+| --- | --- |
+| Copy Trading (demo) | ✅ exists — `copy-store.ts`, `copy-trader-button.tsx` (trader profile), `copy-trading-panel.tsx` (portfolio rail) |
+| AI Market Assistant | ✅ exists — "Ask AI" dialog on market detail |
+| Market News | ✅ exists — `market-news.tsx` bottom of market main column |
+| AI Market Summary | ✅ exists — `ai-summary-card.tsx` below market chart |
+| Market Sentiment | ✅ exists — `market-sentiment.tsx` in market detail rail |
+| Trader Reputation Score | ✅ exists — `reputation-score.tsx` on `/users/[userId]` |
+| Advanced Leaderboards | ✅ exists — period tabs, podium, Most Followed on `/leaderboard` |
+| Referral/Reward system | ⚠️ existed but static (hardcoded stats, toast-only QR/Pro) → rebuilt (below) |
+| Personalized Feed | ❌ **missing** — "For You"/"Following" tabs were stubs → built (below) |
+| Create Market | ✅ intentionally absent (scope decision) |
+
+### 16.1 Personalized Feed (was a stub)
+**Files:** `src/mocks/social.ts`, `src/services/domain.service.ts`,
+`src/app/(dashboard)/social/page.tsx`
+
+**Why:** The "For You" and "Following" tabs were placeholders — Following always
+returned `false` (permanent empty state) and For You was just raw posts. The
+follow (`omx-follows`) and watchlist (`omx-watchlist`) stores existed but were
+never read by the feed.
+
+- **Expanded mock posts** 5 → 11 across all 5 social users, so follows/watchlist
+  curation is meaningful (posts attach real markets m-001/m-007/m-013/m-015).
+- **"Following"** now filters posts to followed traders (+ own posts) instead of
+  always empty; empty state offers a "Find traders" action that scrolls to the
+  suggestions card.
+- **"For You"** now genuinely personalizes: each post is scored on followed
+  author (+8), watched attached market (+4), own post (+2), and engagement
+  (likes/comments/shares, capped), then sorted descending. A Sparkles meta line
+  states what the feed was curated from (e.g. "Curated from 2 traders and 1
+  market you follow").
+- **Fresh "Suggested to Follow"** sidebar card — top non-followed posters with a
+  live `FollowButton`, closing the loop: follow → feed adapts. Backed by new
+  `socialService.getSuggestedTraders()`.
+- "Top" now sorts by engagement score; "Latest" unchanged.
+
+### 16.2 Referral/Reward system (was fully static)
+**Files:** `src/store/referral-store.ts` (new),
+`src/components/invite/referral-qr.tsx` (new),
+`src/app/(dashboard)/invite/page.tsx`
+
+**Why:** The invite page was static markup with hardcoded stats, a toast-only QR
+button, and a "coming soon" Pro button. Rebuilt as a stateful reward system.
+
+- **Persisted store** (`omx-referrals`): invite ledger (6 seed invites: 4 paid
+  + 2 pending → live stats $85 earned / $50 pending / 6 friends), `setPro`,
+  `addInvite` (pays `2x` when Pro), and `referralTotals()` helper.
+- **Reward Ladder card** (new): 4 milestone tiers (1/3/5/10 friends → +$10/25/50/100)
+  with unlocked/locked/next states, a progress bar to the next bonus, and
+  Pro-doubled values.
+- **QR code modal**: real modal (no more toast) rendering a **deterministic
+  SVG QR pattern** seeded from the referral link (`hashString`/`createRng`),
+  finder corners included — remixable demo QR.
+- **Functional Pro toggle**: the Upgrade card now actually flips the persisted
+  `pro` flag with a success toast; per-friend reward, ladder values, and copy
+  all react (e.g. "$50 per friend"). Deactivate restores $25.
+- **Recent Invites** list live from the store with Paid (+$) / Pending (~$) chips
+  and a "Last rewarded" date derived from the ledger.
+
+### 16.3 Verification
+| Check | Result |
+| --- | --- |
+| `npx eslint <changed files>` | 0 problems (only pre-existing `jsx-a11y/alt-text` warnings remain on the social page) |
+| `npm run build` | ✓ Compiled (5.9s) · ✓ TypeScript passed · ✓ 23 routes |
+
+## 17. P2 roadmap — complete
+
+Copy Trading, AI Market Assistant, Market News, AI Market Summary, Market
+Sentiment, Personalized Feed, Trader Reputation Score, Advanced Leaderboards,
+Referral/Reward system — **all implemented**. (Create Market — intentionally
+skipped per scope decision.)

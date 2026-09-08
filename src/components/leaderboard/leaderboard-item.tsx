@@ -25,17 +25,28 @@ const rankStyles: Record<number, { badge: string; medal: string }> = {
 export function LeaderboardItem({
   entry,
   highlighted,
+  metric,
 }: {
   entry: LeaderboardEntry;
   highlighted?: boolean;
+  metric?: "roi" | "profit" | "trades" | "followers";
 }) {
-  const { rank, user, roi, profit, trades, change } = entry;
+  const { rank, user, roi, profit, trades, change, followers } = entry;
   const styles = rankStyles[rank] ?? {
     badge: "bg-background text-text-secondary",
     medal: "var(--text-muted)",
   };
 
   const ChangeIcon = change === 0 ? Minus : change > 0 ? TrendingUp : TrendingDown;
+
+  const metricValue =
+    metric === "followers"
+      ? `${(followers ?? 0) / 1000}k`
+      : metric === "profit"
+        ? formatCurrency(profit)
+        : metric === "trades"
+          ? trades.toLocaleString()
+          : `${roi}%`;
 
   return (
     <div
@@ -112,21 +123,32 @@ export function LeaderboardItem({
       </div>
 
       <div className="w-12 shrink-0 text-right sm:w-20">
-        <p className="number-tight text-sm font-bold text-text-primary">
-          {roi}%
-        </p>
-        <p
-          className={cn(
-            "number-tight text-xs",
-            change === 0
-              ? "text-text-muted"
-              : change > 0
-                ? "text-success"
-                : "text-danger"
-          )}
-        >
-          {change === 0 ? "—" : change > 0 ? `▲${change}` : `▼${Math.abs(change)}`}
-        </p>
+        {metric === "followers" ? (
+          <>
+            <p className="number-tight text-sm font-bold text-text-primary">
+              {metricValue}
+            </p>
+            <p className="number-tight text-xs text-text-muted">followers</p>
+          </>
+        ) : (
+          <>
+            <p className="number-tight text-sm font-bold text-text-primary">
+              {roi}%
+            </p>
+            <p
+              className={cn(
+                "number-tight text-xs",
+                change === 0
+                  ? "text-text-muted"
+                  : change > 0
+                    ? "text-success"
+                    : "text-danger"
+              )}
+            >
+              {change === 0 ? "—" : change > 0 ? `▲${change}` : `▼${Math.abs(change)}`}
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

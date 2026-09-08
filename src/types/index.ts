@@ -105,7 +105,10 @@ export interface LeaderboardEntry {
   profit: number;
   trades: number;
   change: number;
+  followers?: number;
 }
+
+export type CopyAllocation = "1" | "5" | "10";
 
 export interface Post {
   id: string;
@@ -225,6 +228,11 @@ export interface TraderProfile {
     followers: number;
     following: number;
   };
+  reputation: {
+    score: number;
+    streak: number;
+    weeksProfitable: number;
+  };
   recentPositions: TraderPosition[];
 }
 
@@ -271,4 +279,47 @@ export interface OpenOrder {
   price: number;
   shares: number;
   placedAt: string;
+}
+
+export type AiTone = "bullish" | "bearish" | "neutral";
+
+export interface MarketAiSummary {
+  marketId: string;
+  tone: AiTone;
+  headline: string;
+  points: string[];
+  confidence: number;
+  generatedAt: string;
+}
+
+export interface SentimentDriver {
+  label: string;
+  weight: number;
+}
+
+export interface MarketSentiment {
+  marketId: string;
+  bullishPct: number;
+  bearishPct: number;
+  direction: "bullish" | "bearish" | "balanced";
+  drivers: SentimentDriver[];
+}
+
+export interface AiMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface MarketNewsArticle {
+  id: string;
+  marketId: string;
+  source: string;
+  headline: string;
+  excerpt: string;
+  impact: "HIGH" | "MEDIUM" | "LOW";
+  sentiment: "positive" | "negative" | "neutral";
+  minutesAgo: number;
+  likes: number;
+  comments: number;
 }

@@ -52,6 +52,12 @@ export const socialService = {
       poll,
     } as Post);
   },
+  async getSuggestedTraders() {
+    return mockRequest(
+      socialUsers.filter((user) => user.id !== socialUsers[0].id),
+      200
+    );
+  },
 };
 
 export const groupService = {

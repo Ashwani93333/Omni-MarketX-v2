@@ -1,10 +1,20 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Flame, Image, Smile, TrendingUp } from "lucide-react";
-import { useState } from "react";
+import {
+  BarChart3,
+  Flame,
+  Image,
+  Smile,
+  Sparkles,
+  TrendingUp,
+  UserPlus,
+} from "lucide-react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { FollowButton } from "@/components/social/follow-button";
 import { PostCard } from "@/components/social/post-card";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -18,9 +28,13 @@ import { MOCK_CURRENT_USER } from "@/constants";
 import { cn } from "@/lib/utils";
 import { marketService } from "@/services/market.service";
 import { socialService } from "@/services/domain.service";
-import type { Post } from "@/types";
+import { useFollowStore } from "@/store/follow-store";
+import { useWatchlistStore } from "@/store/watchlist-store";
+import type { Post, User } from "@/types";
 
 const FEED_TABS = ["For You", "Following", "Top", "Latest"] as const;
+
+const REEL_KEY = "s-001";
 
 export default function SocialPage() {
   const queryClient = useQueryClient();
@@ -32,6 +46,9 @@ export default function SocialPage() {
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<[string, string]>(["", ""]);
 
+  const followedIds = useFollowStore((s) => s.followedIds);
+  const watchedIds = useWatchlistStore((s) => s.ids);
+
   const EMOJIS = ["\u{1F600}", "\u{1F525}", "\u{1F44D}", "\u{1F680}", "\u{1F40D}", "\u{2764}\u{FE0F}"];
 
   const { data, isLoading, isError, refetch } = useQuery({
@@ -42,6 +59,11 @@ export default function SocialPage() {
   const { data: trending } = useQuery({
     queryKey: ["trending-markets"],
     queryFn: marketService.getTrendingMarkets,
+  });
+
+  const { data: suggested } = useQuery({
+    queryKey: ["suggested-traders"],
+    queryFn: socialService.getSuggestedTraders,
   });
 
   const createPost = useMutation({
@@ -70,11 +92,47 @@ export default function SocialPage() {
     onError: () => toast.error("Couldn\u2019t publish your post"),
   });
 
-  const filteredPosts = data?.filter((post) => {
-    if (activeTab === "Following") return false;
-    if (activeTab === "Top") return (post.likes ?? 0) > 5;
-    return true;
-  });
+  const feed = useMemo(() => {
+    if (!data) return undefined;
+
+    const isMe = (user: User) => user.id === REEL_KEY;
+    const isFollowed = (user: User) => followedIds.includes(user.id);
+    const engagement = (post: Post) =>
+      post.likes * 2 + post.comments * 4 + post.shares * 6;
+
+    const personalize = (post: Post) => {
+      let score = Math.min(6, engagement(post) / 60);
+      if (isFollowed(post.user)) score += 8;
+      if (isMe(post.user)) score += 2;
+      if (post.market && watchedIds.includes(post.market.id)) score += 4;
+      return score;
+    };
+
+    switch (activeTab) {
+      case "Following":
+        return data
+          .filter((post) => isFollowed(post.user) || isMe(post.user))
+          .sort((a, b) => personalize(b) - personalize(a));
+      case "Top":
+        return data
+          .filter((post) => (post.likes ?? 0) > 5)
+          .sort((a, b) => engagement(b) - engagement(a));
+      case "For You":
+        return [...data].sort((a, b) => personalize(b) - personalize(a));
+      case "Latest":
+      default:
+        return data;
+    }
+  }, [data, activeTab, followedIds, watchedIds]);
+
+  const curatedTraders = followedIds.length;
+  const curatedMarkets = data?.filter(
+    (post) => post.market && watchedIds.includes(post.market.id)
+  ).length;
+
+  const suggestedTraders = suggested?.filter(
+    (trader) => !followedIds.includes(trader.id)
+  );
 
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_320px]">
@@ -247,6 +305,17 @@ export default function SocialPage() {
           </TabsList>
 
           <TabsContent value={activeTab} className="pt-4">
+            {activeTab === "For You" ? (
+              <p className="mb-4 flex items-center gap-1.5 text-xs text-text-muted">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                {curatedTraders > 0 || curatedMarkets
+                  ? `Curated from ${curatedTraders} trader${
+                      curatedTraders === 1 ? "" : "s"
+                    } and ${curatedMarkets ?? 0} markets you follow.`
+                  : "Follow traders and watch markets to sharpen your recommendations."}
+              </p>
+            ) : null}
+
             {isLoading ? (
               <div className="space-y-4">
                 {Array.from({ length: 3 }).map((_, i) => (
@@ -255,14 +324,27 @@ export default function SocialPage() {
               </div>
             ) : isError ? (
               <ErrorState onRetry={() => refetch()} />
-            ) : !filteredPosts || filteredPosts.length === 0 ? (
-              <EmptyState
-                title="Nothing here yet"
-                description="Follow traders and communities to personalize your feed."
-              />
+            ) : !feed || feed.length === 0 ? (
+              activeTab === "Following" ? (
+                <EmptyState
+                  title="Nobody to show yet"
+                  description="Follow traders to surface their posts here. Suggestions below are a great place to start."
+                  actionLabel="Find traders"
+                  onAction={() =>
+                    document
+                      .getElementById("suggested-traders")
+                      ?.scrollIntoView({ behavior: "smooth", block: "center" })
+                  }
+                />
+              ) : (
+                <EmptyState
+                  title="Nothing here yet"
+                  description="Follow traders and communities to personalize your feed."
+                />
+              )
             ) : (
               <div className="space-y-4">
-                {filteredPosts.map((post) => (
+                {feed.map((post) => (
                   <PostCard key={post.id} post={post} />
                 ))}
               </div>
@@ -307,6 +389,57 @@ export default function SocialPage() {
               <div className="space-y-2.5">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <Skeleton key={i} className="h-10 rounded-[10px]" />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card id="suggested-traders">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-[15px]">
+              <UserPlus className="h-4 w-4 text-primary" />
+              Suggested to Follow
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {suggestedTraders && suggestedTraders.length > 0 ? (
+              <ul className="space-y-2">
+                {suggestedTraders.map((trader) => (
+                  <li
+                    key={trader.id}
+                    className="flex items-center gap-2 rounded-[12px] border border-border-light bg-background p-2.5"
+                  >
+                    <Link
+                      href={`/users/${trader.id}`}
+                      className="flex min-w-0 flex-1 items-center gap-2.5"
+                    >
+                      <Avatar
+                        size="sm"
+                        initials={trader.initials}
+                        alt={trader.displayName}
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-text-primary">
+                          {trader.displayName}
+                        </p>
+                        <p className="truncate text-xs text-text-muted">
+                          @{trader.username}
+                        </p>
+                      </div>
+                    </Link>
+                    <FollowButton userId={trader.id} />
+                  </li>
+                ))}
+              </ul>
+            ) : suggested && suggested.length > 0 ? (
+              <p className="px-2 py-3 text-center text-xs text-text-muted">
+                You&rsquo;re following everyone recommended. Nice taste.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12 rounded-[12px]" />
                 ))}
               </div>
             )}

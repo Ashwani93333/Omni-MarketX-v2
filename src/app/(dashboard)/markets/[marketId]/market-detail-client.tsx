@@ -4,17 +4,21 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Clock, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { AiAssistantDialog } from "@/components/ai/ai-assistant-dialog";
+import { AiSummaryCard } from "@/components/ai/ai-summary-card";
 import { MarketActivity } from "@/components/market/market-activity";
 import { MarketAlertsCard } from "@/components/market/market-alerts";
 import { MarketPriceChart } from "@/components/market/market-chart";
 import { MarketCardCompact } from "@/components/market/market-card-compact";
 import { MarketDiscussion } from "@/components/market/market-discussion";
+import { MarketNews } from "@/components/market/market-news";
 import {
   FavoriteStar,
   MarketCategoryChip,
   MarketStatusBadge,
   MarketVolumeTraders,
 } from "@/components/market/market-probability";
+import { MarketSentimentCard } from "@/components/market/market-sentiment";
 import { TradePanel } from "@/components/market/trade-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
@@ -81,6 +85,9 @@ export function MarketDetailClient({ marketId }: { marketId: string }) {
                 <MarketCategoryChip category={market.category} />
                 <MarketStatusBadge status={market.status} />
                 <FavoriteStar marketId={market.id} size="md" />
+                <span className="ml-auto">
+                  <AiAssistantDialog market={market} />
+                </span>
               </div>
               <CardTitle className="text-xl font-bold leading-snug sm:text-2xl">
                 {market.title}
@@ -102,6 +109,8 @@ export function MarketDetailClient({ marketId }: { marketId: string }) {
               <MarketPriceChart probability={market.probability} />
             </CardContent>
           </Card>
+
+          <AiSummaryCard market={market} />
 
           {market.outcomes && market.outcomes.length > 0 ? (
             <Card>
@@ -188,6 +197,8 @@ export function MarketDetailClient({ marketId }: { marketId: string }) {
           />
 
           <MarketDiscussion marketId={market.id} />
+
+          <MarketNews market={market} />
         </div>
 
         <aside className="order-1 space-y-6 lg:order-2 lg:sticky lg:top-20 self-start w-full">
@@ -223,6 +234,8 @@ export function MarketDetailClient({ marketId }: { marketId: string }) {
               </div>
             </CardContent>
           </Card>
+
+          <MarketSentimentCard market={market} />
 
           <MarketAlertsCard
             marketId={market.id}
