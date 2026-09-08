@@ -9,15 +9,10 @@ import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { groups } from "@/mocks/groups";
+import { searchUsers } from "@/mocks/social";
 import { marketService } from "@/services/market.service";
 import type { Group, User } from "@/types";
 import { cn } from "@/lib/utils";
-
-const searchUsers: User[] = [
-  { id: "su-1", username: "miacrypto", displayName: "Mia Crypto", initials: "MC" },
-  { id: "su-2", username: "quantjuno", displayName: "Quant Juno", initials: "QJ" },
-  { id: "su-3", username: "kadanster", displayName: "Kaden Sterling", initials: "KS" },
-];
 
 export function SearchResults({ query }: { query: string }) {
   const q = query.trim();
@@ -174,7 +169,7 @@ function TradersRow({ users }: { users: User[] }) {
       {users.map((user) => (
         <Link
           key={user.id}
-          href="/leaderboard"
+          href={`/users/${user.id}`}
           className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-background"
         >
           <Avatar size="md" initials={user.initials} alt={user.displayName} />

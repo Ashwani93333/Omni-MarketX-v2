@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { EyeOff, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { MarketCard } from "@/components/market/market-card";
@@ -10,6 +11,14 @@ import { MarketCardSkeletonGrid } from "@/components/market/market-card-skeleton
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import {
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/modal";
 import { marketService } from "@/services/market.service";
 import { useWatchlistStore } from "@/store/watchlist-store";
 
@@ -17,6 +26,7 @@ export default function WatchlistPage() {
   const router = useRouter();
   const ids = useWatchlistStore((s) => s.ids);
   const clear = useWatchlistStore((s) => s.clear);
+  const [confirmingClear, setConfirmingClear] = useState(false);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["markets", "all"],
@@ -37,7 +47,7 @@ export default function WatchlistPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={clear}
+            onClick={() => setConfirmingClear(true)}
             className="text-text-muted"
           >
             <EyeOff className="h-4 w-4" />
@@ -80,6 +90,33 @@ export default function WatchlistPage() {
           it from your watchlist.
         </p>
       </div>
+
+      <Modal open={confirmingClear} onOpenChange={setConfirmingClear}>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>Clear your watchlist?</ModalTitle>
+            <ModalDescription>
+              This will unfollow all {watched.length}{" "}
+              {watched.length === 1 ? "market" : "markets"} from your
+              watchlist. You can always add them back later.
+            </ModalDescription>
+          </ModalHeader>
+          <ModalFooter>
+            <Button variant="secondary" onClick={() => setConfirmingClear(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                clear();
+                setConfirmingClear(false);
+              }}
+            >
+              Clear watchlist
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

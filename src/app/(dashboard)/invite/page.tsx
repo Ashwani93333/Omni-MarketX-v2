@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/modal";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { StatCard } from "@/components/ui/stat-card";
+import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
   REFERRAL_BASE_REWARD,
@@ -93,13 +94,13 @@ export default function InvitePage() {
         <StatCard
           icon={<Gift className="h-5 w-5" />}
           label="Rewards Earned"
-          value={`$${earned.toFixed(2)}`}
+          value={formatCurrency(earned)}
           accent="success"
         />
         <StatCard
           icon={<QrCode className="h-5 w-5" />}
           label="Pending Bonuses"
-          value={`$${pending.toFixed(2)}`}
+          value={formatCurrency(pending)}
           accent="orange"
         />
       </div>

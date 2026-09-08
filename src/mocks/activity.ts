@@ -45,6 +45,8 @@ export const users: User[] = [
   },
 ];
 
+export const activityUsers = users;
+
 export const activityFeed: ActivityPost[] = [
   {
     id: "act-001",

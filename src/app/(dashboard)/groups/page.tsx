@@ -29,6 +29,7 @@ import type { Group } from "@/types";
 
 const GROUP_FILTERS = [
   "All",
+  "Community",
   "Crypto",
   "Sports",
   "Politics",
@@ -205,7 +206,12 @@ export default function GroupsPage() {
         </TabsContent>
 
         <TabsContent value="My Groups">
-          {renderGrid(myGroups, loadingMy, errorMy, refetchMy)}
+          {renderGrid(
+            [...(myGroups ?? []), ...extraGroups],
+            loadingMy,
+            errorMy,
+            refetchMy
+          )}
         </TabsContent>
 
         <TabsContent value="Popular">

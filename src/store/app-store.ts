@@ -3,6 +3,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+import { toast } from "sonner";
+
 export type Theme = "light" | "dark" | "system";
 export type TradingMode = "DEMO" | "REAL";
 
@@ -23,7 +25,19 @@ export const useAppStore = create<AppState>()(
       theme: "system",
       setTheme: (theme) => set({ theme }),
       tradingMode: "DEMO",
-      setTradingMode: (tradingMode) => set({ tradingMode }),
+      setTradingMode: (tradingMode) => {
+        set({ tradingMode });
+        if (tradingMode === "REAL") {
+          toast.info("Live mode is simulated", {
+            description:
+              "No real funds are moved. Continue with your virtual portfolio.",
+          });
+        } else {
+          toast.success("Demo mode enabled", {
+            description: "Trading with virtual funds.",
+          });
+        }
+      },
       sidebarOpen: true,
       setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
       mobileNavOpen: false,

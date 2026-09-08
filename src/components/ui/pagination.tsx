@@ -32,6 +32,7 @@ export function Pagination({
           key={p}
           variant={p === page ? "primary" : "secondary"}
           size="icon-sm"
+          aria-current={p === page ? "page" : undefined}
           className={cn(
             p !== page && "text-text-secondary",
             "w-8 text-xs font-semibold"

@@ -24,6 +24,14 @@ import {
   InputHint,
   Textarea,
 } from "@/components/ui/input";
+import {
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/modal";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -60,6 +68,7 @@ export default function SettingsPage() {
   });
   const avatarRef = useRef<HTMLInputElement>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [confirmingReset, setConfirmingReset] = useState(false);
 
   const {
     register,
@@ -322,12 +331,7 @@ export default function SettingsPage() {
               <Button
                 variant="destructive"
                 className="w-full"
-                onClick={() => {
-                  resetDemo();
-                  toast.success("Demo account reset", {
-                    description: "Virtual balance restored to $10,000.",
-                  });
-                }}
+                onClick={() => setConfirmingReset(true)}
               >
                 Reset Demo Account
               </Button>
@@ -368,6 +372,35 @@ export default function SettingsPage() {
           </Card>
         </aside>
       </div>
+
+      <Modal open={confirmingReset} onOpenChange={setConfirmingReset}>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>Reset demo account?</ModalTitle>
+            <ModalDescription>
+              This will clear all virtual trades and restore your balance to
+              $10,000. This cannot be undone.
+            </ModalDescription>
+          </ModalHeader>
+          <ModalFooter>
+            <Button variant="secondary" onClick={() => setConfirmingReset(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                resetDemo();
+                setConfirmingReset(false);
+                toast.success("Demo account reset", {
+                  description: "Virtual balance restored to $10,000.",
+                });
+              }}
+            >
+              Reset
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

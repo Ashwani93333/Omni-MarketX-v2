@@ -39,8 +39,8 @@ export default function PortfolioPage() {
   const totalPnl = positions.reduce((sum, p) => sum + p.pnl, 0);
 
   return (
-    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_320px]">
-      <div className="space-y-6">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="min-w-0 space-y-6">
         <PageHeader
           eyebrow="Overview"
           title="Portfolio"

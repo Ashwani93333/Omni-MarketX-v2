@@ -56,7 +56,11 @@ export function MarketRow({ market }: { market: Market }) {
         <ProbabilityBar probability={market.probability} />
       </div>
 
-      <MarketActionButtons marketId={market.id} className="shrink-0 sm:w-40" />
+      <MarketActionButtons
+        marketId={market.id}
+        disabled={market.status !== "OPEN"}
+        className="shrink-0 sm:w-40"
+      />
     </MarketLink>
   );
 }

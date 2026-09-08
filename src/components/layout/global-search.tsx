@@ -9,14 +9,9 @@ import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { SearchInput } from "@/components/ui/search-input";
 import { groups } from "@/mocks/groups";
+import { searchUsers } from "@/mocks/social";
 import { marketService } from "@/services/market.service";
-import type { Group, Market, User } from "@/types";
-
-const searchUsers: User[] = [
-  { id: "su-1", username: "miacrypto", displayName: "Mia Crypto", initials: "MC" },
-  { id: "su-2", username: "quantjuno", displayName: "Quant Juno", initials: "QJ" },
-  { id: "su-3", username: "kadanster", displayName: "Kaden Sterling", initials: "KS" },
-];
+import type { Group, Market } from "@/types";
 
 function useDebouncedValue<T>(value: T, ms: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -173,38 +168,28 @@ export function GlobalSearch() {
                 {matchedUsers.length > 0 && (
                   <SearchSection label="Users">
                     {matchedUsers.map((u) => (
-                      <button
+                      <SearchRow
                         key={u.id}
-                        onClick={() => setOpen(false)}
-                        className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-background"
-                      >
-                        <Avatar size="sm" initials={u.initials} />
-                        <span className="text-sm font-medium text-text-primary">
-                          {u.displayName}
-                        </span>
-                        <span className="text-xs text-text-muted">
-                          @{u.username}
-                        </span>
-                      </button>
+                        href={`/users/${u.id}`}
+                        title={u.displayName}
+                        sub={`@${u.username}`}
+                        initials={u.initials}
+                        onSelect={() => setOpen(false)}
+                      />
                     ))}
                   </SearchSection>
                 )}
                 {matchedGroups.length > 0 && (
                   <SearchSection label="Groups">
                     {matchedGroups.map((g) => (
-                      <button
+                      <SearchRow
                         key={g.id}
-                        onClick={() => setOpen(false)}
-                        className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-background"
-                      >
-                        <Avatar size="sm" initials={g.initials} />
-                        <span className="text-sm font-medium text-text-primary">
-                          {g.name}
-                        </span>
-                        <span className="text-xs text-text-muted">
-                          {g.memberCount.toLocaleString()} members
-                        </span>
-                      </button>
+                        href="/groups"
+                        title={g.name}
+                        sub={`${g.memberCount.toLocaleString()} members · ${g.category}`}
+                        initials={g.initials}
+                        onSelect={() => setOpen(false)}
+                      />
                     ))}
                   </SearchSection>
                 )}
@@ -238,21 +223,26 @@ function SearchRow({
   href,
   title,
   sub,
+  initials,
   onSelect,
 }: {
   href: string;
   title: string;
   sub: string;
+  initials?: string;
   onSelect: () => void;
 }) {
   return (
     <Link
       href={href}
       onClick={onSelect}
-      className="flex w-full flex-col gap-0.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-background"
+      className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-background"
     >
-      <span className="text-sm font-medium text-text-primary">{title}</span>
-      <span className="text-xs text-text-muted">{sub}</span>
+      {initials ? <Avatar size="sm" initials={initials} /> : null}
+      <span className="min-w-0">
+        <span className="block text-sm font-medium text-text-primary">{title}</span>
+        <span className="block truncate text-xs text-text-muted">{sub}</span>
+      </span>
     </Link>
   );
 }

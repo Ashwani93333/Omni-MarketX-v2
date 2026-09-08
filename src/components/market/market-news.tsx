@@ -1,7 +1,6 @@
 "use client";
 
 import { MessageCircle, Newspaper, ThumbsUp } from "lucide-react";
-import Link from "next/link";
 import { useMemo } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,10 +42,9 @@ export function MarketNews({ market }: { market: Market }) {
       </CardHeader>
       <CardContent className="space-y-3 pt-0">
         {articles.map((article) => (
-          <Link
+          <article
             key={article.id}
-            href="#"
-            className="block rounded-[12px] border border-border bg-background p-3.5 transition-colors hover:border-primary/40"
+            className="block rounded-[12px] border border-border bg-background p-3.5"
           >
             <div className="flex flex-wrap items-center gap-2 text-[11px]">
               <span className="font-bold text-text-primary">{article.source}</span>
@@ -86,7 +84,7 @@ export function MarketNews({ market }: { market: Market }) {
                 <span className="number-tight">{article.comments}</span>
               </span>
             </div>
-          </Link>
+          </article>
         ))}
       </CardContent>
     </Card>

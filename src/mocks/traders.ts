@@ -1,6 +1,7 @@
 import { MOCK_CURRENT_USER } from "@/constants";
 import type { TraderPosition, TraderProfile, User } from "@/types";
 
+import { activityUsers } from "./activity";
 import { leaderboardRows } from "./leaderboard";
 import { createRng, hashString } from "./market-activity";
 import { markets } from "./markets";
@@ -16,6 +17,7 @@ const currentUser: User = {
 const baseUsers: User[] = [
   currentUser,
   ...socialUsers,
+  ...activityUsers,
   ...leaderboardRows.map((e) => e.user),
 ];
 

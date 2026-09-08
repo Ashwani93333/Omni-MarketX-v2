@@ -244,6 +244,14 @@ export const posts: Post[] = [
   },
 ];
 
+export const searchUsers: User[] = [
+  { id: "s-002", username: "miacrypto", displayName: "Mia Crypto", initials: "MC" },
+  { id: "u-l1", username: "quantjuno", displayName: "Quant Juno", initials: "QJ" },
+  { id: "s-003", username: "kadanster", displayName: "Kaden Sterling", initials: "KS" },
+  { id: "s-004", username: "novahodl", displayName: "Nova Hodl", initials: "NH" },
+  { id: "s-005", username: "riskqueen", displayName: "RiskQueen", initials: "RQ" },
+];
+
 export const stories = [
   {
     id: "st-001",

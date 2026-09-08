@@ -65,16 +65,24 @@ export function MarketDetailClient({ marketId }: { marketId: string }) {
     );
   }
 
-  const noPrice = (1 - market.probability) / 100;
+  const noPrice = 1 - market.probability / 100;
+
+  const goBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/markets");
+    }
+  };
 
   return (
     <div className="space-y-6">
       <button
-        onClick={() => router.back()}
+        onClick={goBack}
         className="inline-flex items-center gap-1.5 text-sm font-semibold text-text-secondary transition-colors hover:text-text-primary"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back
+        Back to Markets
       </button>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -150,7 +158,7 @@ export function MarketDetailClient({ marketId }: { marketId: string }) {
                     {market.probability}%
                   </p>
                   <p className="mt-1 text-xs text-text-secondary">
-                    $ {market.probability / 100} / share
+                    $ {(market.probability / 100).toFixed(3)} / share
                   </p>
                 </div>
                 <div className="rounded-[12px] bg-danger-light p-4">
@@ -206,6 +214,7 @@ export function MarketDetailClient({ marketId }: { marketId: string }) {
             marketId={market.id}
             marketTitle={market.title}
             probability={market.probability}
+            status={market.status}
           />
 
           <Card>

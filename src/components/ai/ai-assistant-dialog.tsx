@@ -81,7 +81,7 @@ export function AiAssistantDialog({ market }: { market: Market }) {
                 className={cn(
                   "max-w-[85%] rounded-[10px] px-3.5 py-2.5 text-[13px] leading-relaxed",
                   m.role === "user"
-                    ? "ml-auto bg-primary text-primary-foreground"
+                    ? "ml-auto bg-primary text-white"
                     : "border border-border bg-background text-text-primary"
                 )}
               >

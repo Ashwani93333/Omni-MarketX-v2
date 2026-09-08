@@ -10,6 +10,7 @@ import { MarketCard } from "@/components/market/market-card";
 import { MarketCardSkeletonGrid } from "@/components/market/market-card-skeleton";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { CATEGORY_CHIPS } from "@/constants";
 import { marketService } from "@/services/market.service";
 import { useAppStore } from "@/store/app-store";
@@ -17,7 +18,7 @@ import { useAppStore } from "@/store/app-store";
 export default function HomePage() {
   const tradingMode = useAppStore((s) => s.tradingMode);
   const router = useRouter();
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["markets", "home"],
     queryFn: () => marketService.getMarkets({ sort: "Volume" }),
   });
@@ -92,11 +93,20 @@ export default function HomePage() {
 
           {isLoading ? (
             <MarketCardSkeletonGrid count={6} />
+          ) : isError ? (
+            <div className="mt-4">
+              <ErrorState
+                title="Couldn't load markets"
+                description="Something went wrong while fetching the latest markets."
+                onRetry={() => refetch()}
+              />
+            </div>
           ) : topMarkets.length === 0 ? (
             <EmptyState
               title="No markets found"
               description="Try another search or category."
               actionLabel="Clear Filters"
+              onAction={() => router.push("/markets")}
             />
           ) : (
             <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">

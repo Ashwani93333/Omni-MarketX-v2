@@ -5,7 +5,32 @@ Audio reference: `OmniMarketX_Frontend_UI_UX_Specification.md` (the UI/UX spec t
 
 All changes are verified with:
 - `npm run lint` — clean on every touched file (0 errors)
-- `npm run build` — passes (TypeScript OK, all 16 routes generated)
+- `npm run build` — passes (TypeScript OK, all 23 routes generated)
+
+---
+
+## Changelog at a glance (all work so far)
+
+| # | Change | Why (rationale) |
+| --- | --- | --- |
+| 1 | Bug fixes (wallet $0, category reload, double nav, toggles, Infinity shares, expired labels, search) | Core flows were wrong/dead — first pass to make the demo behave correctly. |
+| 2 | Responsive UI fixes (rails, grids, leaderboard rows, demo banner, mobile search) | Layouts broke or cut off content at tablet/mobile widths. |
+| 3 | Feature additions (trade-panel guard, settings help card, invite spec sections, register password toggles) | Small spec features the app was missing. |
+| 4 | Pre-existing warnings (non-blocking) | Documented known re-export warnings; nothing to fix yet. |
+| 5 | Verification gate | Established lint + build as the always-run quality check. |
+| 6 | Live-site clone & visual alignment (`/`, `/home`, `/search`, groups, polls, wallet, notifications) | Task was to clone omnimarketx.com end to end — matched design tokens, fonts, landing page, and fixed dead UI. |
+| 7 | P0: Watchlist (persisted store, star, `/watchlist`) | The "check and implement these features" task — watchlist was marked done but didn't exist. |
+| 8 | P1 batch 1: Order Book, Recent Trades, Market Discussion, Price Alerts | All P1 "Market Activity" features were missing from the market-detail page. |
+| 9 | P1 batch 2: Trader Profiles + Follow Traders | Leaderboard/profile links were dead ends; no follow capability. |
+| 10 | P1 batch 3: Trading Analytics + Achievements | Portfolio lacked performance insight; no gamification. |
+| 11 | P1 batch 4: Market Heatmap + Open Orders | Visual "where is the money" + active-order management were absent. |
+| 12 | P2 roadmap (deferred) | Differentiation features scoped for later phases. |
+| 13 | P2 batch 1: AI Summary, Sentiment, Assistant | Differentiate the demo with AI features the spec called for. |
+| 14 | P2 batch 2: Market News | Per-market news feed with impact/sentiment tagging. |
+| 15 | P2 batch 3: Reputation Score, Copy Trading (demo), Advanced Leaderboards | Trader credibility, copy-demo loop, and podium/most-followed leaderboards. |
+| 16 | P2 batch 4: Personalized Feed + Referral/Reward system | "For You" was a stub and the invite page was static — rebuilt both as stateful systems (finishes P2). |
+| 17 | P2 roadmap complete | Full differentiation scope shipped (Create Market intentionally skipped). |
+| 18 | Polish & bug-fix pass (2026-09-09) | Audit-driven fixes: negative NO price, trading on closed markets, profile 404s, fake search, unconfirmed destructive actions + a11y/CSS/perf nits (details below). |
 
 ---
 
@@ -700,3 +725,143 @@ Copy Trading, AI Market Assistant, Market News, AI Market Summary, Market
 Sentiment, Personalized Feed, Trader Reputation Score, Advanced Leaderboards,
 Referral/Reward system — **all implemented**. (Create Market — intentionally
 skipped per scope decision.)
+---
+
+## 18. Polish & bug-fix pass (2026-09-09)
+
+**Why:** After shipping the full P1/P2 roadmap (sections 8-17), a fresh audit of the
+layout, every page, and the component/store layer surfaced a backlog of functional
+bugs (wrong math, dead links, 404 routes, destructive actions without confirm) plus
+a11y/CSS/perf nits. Left unfixed they break core flows, so this pass fixes the
+high-impact bugs first and the top medium-impact items second. Verified with the
+build + lint gate before committing.
+
+### 18.1 High-severity fixes
+
+#### 18.1.1 NO price went negative
+**File:** `src/app/(dashboard)/markets/[marketId]/market-detail-client.tsx`
+**Why:** `Market.probability` is stored as a 0-100 percentage, but the NO side was
+computed as `(1 - market.probability) / 100` — real math with the wrong units, so the
+NO price displayed negative for any market above 100% (see the shared
+`probability - 1 - x` convention already used elsewhere, and the 0-100 contract in
+`src/types/index.ts`). The YES price also rendered as raw floating point.
+**Fix:** `1 - market.probability / 100` (keeps 0-100 units), and the YES price is
+formatted to 3 decimals for a clean cents-per-share display.
+
+#### 18.1.2 Trading was allowed on closed/resolved markets
+**Files:** `src/components/market/trade-panel.tsx`, `market-card.tsx`, `market-row.tsx`,
+`market-detail-client.tsx`
+**Why:** `TradePanel` had no notion of market state, and `MarketActionButtons`
+rendered live YES/NO buttons on every card — so users could place real trades against
+markets that were CLOSED or already RESOLVED (a financial-integrity bug, even in demo).
+**Fix:** `TradePanel` takes a `status` prop (default `"OPEN"`); when the market is not
+OPEN it renders a "Market resolved/closed" notice instead of the side-select + form (no
+browser history or URL toast side effects either). Cards/rows pass
+`disabled={market.status !== "OPEN"}` into `MarketActionButtons`, and the detail page
+passes `market.status` down. The degenerate-side guard (price <= 1%) is preserved.
+
+#### 18.1.3 Activity feed trader links hit 404
+**Files:** `src/mocks/traders.ts`, `src/mocks/activity.ts`
+**Why:** The activity feed's `users` (`u-001..u-007`) are linked from avatars and
+trade rows, but `traderProfiles` was built only from `socialUsers` + leaderboard rows,
+so `/users/u-003` (etc.) threw the "trader not found" state — most profile links in
+the app were broken.
+**Fix:** Exported `activityUsers` alias from `activity.ts` and merged it into
+`baseUsers` in `traders.ts`, so every id used anywhere in a link resolves to a
+rendered profile.
+
+#### 18.1.4 Search results were fake and un-clickable
+**Files:** `src/mocks/social.ts` (new `searchUsers`), `src/components/layout/global-search.tsx`,
+`src/app/(dashboard)/search/search-client.tsx`
+**Why:** The header command search and the `/search` page listed "users" with fake ids
+(`su-1/2/3`) that redirected nowhere, so search could never reach a real profile, and
+result rows were inert `<button>`s. The two implementations also duplicated the same
+mock data (drift risk).
+**Fix:** Centralized a shared `searchUsers` array in `social.ts` using **real** ids from
+`traderProfiles` (`s-002`, `u-l1`, `s-003`, `s-004`, `s-005`). Both consumers now emit
+real `<Link href="/users/{id}">` rows (traders) and `/groups` links (groups);
+global-search rows regained their avatars via an optional `initials` prop on the shared
+`SearchRow`.
+
+#### 18.1.5 Destructive reset ran with no confirmation
+**File:** `src/app/(dashboard)/settings/page.tsx`
+**Why:** "Reset Demo Account" wiped the trading ledger and wallet instantly on click —
+a destructive, irreversible action with zero guard; one mis-click loses all positions.
+**Fix:** The button now opens a confirm modal ("Clear all virtual trades, restore
+$10,000") with Cancel/Reset; the reset itself runs only on explicit confirm.
+
+#### 18.1.6 Back button stranded users with no history
+**File:** `src/app/(dashboard)/markets/[marketId]/market-detail-client.tsx`
+**Why:** The market-detail "Back" link called `router.back()` unconditionally. On a
+deep-linked/opened-in-new-tab page there is no history, and the browser does nothing
+(feels like a dead button).
+**Fix:** `goBack()` checks `window.history.length > 1` first and falls back to
+`router.push("/markets")` otherwise.
+
+### 18.2 Medium-severity fixes
+- **Dead `href="#"` article links** — `src/components/market/market-news.tsx`
+  **Why:** News cards wrapped in `<Link href="#">` implied navigation that didn't exist;
+  clicking scrolled to top / did nothing.
+  **Fix:** Cards are now plain `<article>` elements with the hover affordance removed.
+- **Watchlist "Clear all" no confirm** — `src/app/(dashboard)/watchlist/page.tsx`
+  **Why:** Same destructive-action problem as settings: the wipe ran instantly.
+  **Fix:** Confirm modal with live count before clearing.
+- **Movers always showed `+`** — `src/components/layout/right-rail.tsx`
+  **Why:** Top Volume Movers rendered `+{mover.change}%` in green for every row, even
+  negative movers; also used raw `<a>` (no next/link SPA nav) and had no error state.
+  **Fix:** Dynamic sign + danger color for negative changes, `next/link` navigation,
+  and a shared "Retry" error state on both right-rail cards.
+- **Grid overflow past the aside** — `src/app/(dashboard)/portfolio/page.tsx`,
+  `src/app/(dashboard)/activity/page.tsx`
+  **Why:** `xl:grid-cols-[1fr_320px]` uses min-content sizing for the content column, so
+  wide inner grids (stat cards / position cards) could overflow under the right rail.
+  **Fix:** `minmax(0,1fr)` + `min-w-0` on the content column.
+- **Home page had no error state** — `src/app/(dashboard)/home/page.tsx`
+  **Why:** A failed markets query silently rendered an empty grid ("Top Markets" with no
+  cards) and the EmptyState action was a no-op button.
+  **Fix:** Added `isError` branch with retry, and wired EmptyState's action to
+  `router.push("/markets")`.
+- **Created groups unreachable** — `src/app/(dashboard)/groups/page.tsx`
+  **Why:** New groups default to category `Community`, but the filter chips had no
+  Community option (only All matched them), and the "My Groups" tab ignored
+  locally-created groups entirely.
+  **Fix:** Added a "Community" chip and merged `extraGroups` into the My Groups render.
+- **Invisible AI chat bubbles** — `src/components/ai/ai-assistant-dialog.tsx`
+  **Why:** User messages used `text-primary-foreground`, a token that doesn't exist in
+  this theme (only `text-text-*` tokens are defined), so user bubbles inheried
+  text colour on a `bg-primary` background — near-unreadable.
+  **Fix:** `text-white` on the primary background.
+- **Pagination active page not announced** — `src/components/ui/pagination.tsx`
+  **Why:** Screen readers had no way to tell which page was current.
+  **Fix:** `aria-current="page"` on the active page button.
+- **Chart series regenerated on every render** — `src/components/market/market-chart.tsx`
+  **Why:** `generateData(...)` ran on each render even though it only depends on
+  `probability` + `range`.
+  **Fix:** Wrapped in `useMemo` over `[probability, range]`.
+- **Inconsistent invite money formatting** — `src/app/(dashboard)/invite/page.tsx`
+  **Why:** Stat cards hand-rolled `$${n.toFixed(2)}` while the rest of the app uses
+  `formatCurrency`.
+  **Fix:** `formatCurrency(earned)` / `formatCurrency(pending)`.
+- **Demo banner caused layout shift** — `src/components/layout/demo-banner.tsx`
+  **Why:** The banner mounted/unmounted with the mode, so SSR/persist hydration or a mode
+  switch shifted the entire layout down/up by ~30px.
+  **Fix:** The outer shell is always mounted with reserved height (`h-0 overflow-hidden`
+  when not demo) so toggling DEMO/REAL no longer shifts content.
+- **REAL mode had no disclaimer** — `src/store/app-store.ts`
+  **Why:** Switching to "Real" mode silently implied live trading even though no funds
+  move; also the same toggle exists in 4 places (header, banner, profile menu, settings),
+  so adding UI at each call site would drift.
+  **Fix:** Centralized the toast in the store action: REAL → "Live mode is simulated"
+  warning, DEMO → "Demo mode enabled" confirmation, firing from every entry point.
+
+### 18.3 Verification
+| Check | Result |
+| --- | --- |
+| `npx eslint <changed files>` | 0 errors (1 pre-existing `react-hooks/incompatible-library` warning on react-hook-form `watch()`) |
+| `npm run build` | ? Compiled (5.5s) ? TypeScript passed ? 23 routes |
+
+### 18.4 Deferred (noted for a later pass)
+- Command Palette (Cmd/Ctrl+K) global search - planned, not started.
+- Unify the duplicate trader identities between activity feed (`u-*`) and
+  social/leaderboard (`s-*` / `u-l*`) mocks into a single id space (routes currently
+  still resolve, just under two id sets).

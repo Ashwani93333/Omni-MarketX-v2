@@ -1,6 +1,7 @@
 "use client";
 
 import { Activity as ActivityIcon, Flame, TrendingUp, Zap } from "lucide-react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import { marketService } from "@/services/market.service";
 import { cn } from "@/lib/utils";
 
 export function TrendingNowRail() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["trending-markets"],
     queryFn: marketService.getTrendingMarkets,
   });
@@ -31,11 +32,13 @@ export function TrendingNowRail() {
               <Skeleton key={i} className="h-12 rounded-[10px]" />
             ))}
           </div>
+        ) : isError || !data?.length ? (
+          <RailError onRetry={refetch} />
         ) : (
           <ol className="space-y-2.5">
-            {data?.slice(0, 5).map((m, i) => (
+            {data.slice(0, 5).map((m, i) => (
               <li key={m.id}>
-                <a
+                <Link
                   href={`/markets/${m.id}`}
                   className="flex items-center justify-between gap-2 rounded-[10px] px-2 py-1.5 transition-colors hover:bg-background"
                 >
@@ -59,7 +62,7 @@ export function TrendingNowRail() {
                   <span className="number-tight shrink-0 font-bold text-success">
                     {m.probability}%
                   </span>
-                </a>
+                </Link>
               </li>
             ))}
           </ol>
@@ -106,7 +109,7 @@ export function LiveMarketPulse({
 }
 
 export function TopVolumeMovers() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["top-volume-movers"],
     queryFn: marketService.getTopVolumeMovers,
   });
@@ -126,11 +129,13 @@ export function TopVolumeMovers() {
               <Skeleton key={i} className="h-12 rounded-[10px]" />
             ))}
           </div>
+        ) : isError || !data?.length ? (
+          <RailError onRetry={refetch} />
         ) : (
           <ul className="space-y-1">
-            {data?.map((mover) => (
+            {data.map((mover) => (
               <li key={mover.marketId}>
-                <a
+                <Link
                   href={`/markets/${mover.marketId}`}
                   className="flex items-center justify-between rounded-[10px] px-2 py-2 transition-colors hover:bg-background"
                 >
@@ -141,19 +146,40 @@ export function TopVolumeMovers() {
                     </span>
                   </span>
                   <span className="flex shrink-0 items-center gap-3 text-xs">
-                    <span className="font-bold text-success">
-                      +{mover.change}%
+                    <span
+                      className={cn(
+                        "font-bold",
+                        mover.change >= 0 ? "text-success" : "text-danger"
+                      )}
+                    >
+                      {mover.change >= 0 ? "+" : ""}
+                      {mover.change}%
                     </span>
                     <span className="number-tight font-semibold text-text-secondary">
                       {mover.probability}%
                     </span>
                   </span>
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function RailError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-[12px] bg-background px-3 py-5 text-center">
+      <p className="text-xs text-text-secondary">Unable to load data</p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="text-xs font-semibold text-primary hover:underline"
+      >
+        Try again
+      </button>
+    </div>
   );
 }

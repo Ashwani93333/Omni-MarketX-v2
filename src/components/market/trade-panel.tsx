@@ -20,9 +20,10 @@ import {
 } from "@/components/ui/modal";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, formatPnL } from "@/lib/format";
 import { useAppStore } from "@/store/app-store";
 import { useTradingStore } from "@/store/trading-store";
+import type { MarketStatus } from "@/types";
 
 const tradeSchema = z.object({
   amount: z.string().regex(/^\d+(\.\d{1,2})?$/, "Enter a valid amount"),
@@ -36,11 +37,13 @@ export function TradePanel({
   marketId,
   marketTitle,
   probability,
+  status = "OPEN",
   onSuccess,
 }: {
   marketId: string;
   marketTitle: string;
   probability: number;
+  status?: MarketStatus;
   onSuccess?: () => void;
 }) {
   const searchParams = useSearchParams();
@@ -56,6 +59,7 @@ export function TradePanel({
   const placeTrade = useTradingStore((s) => s.placeTrade);
   const tradingMode = useAppStore((s) => s.tradingMode);
 
+  const isClosed = status !== "OPEN";
   const selectedPrice = side === "YES" ? probability / 100 : 1 - probability / 100;
   const degenerate = selectedPrice <= 0.01;
 
@@ -169,178 +173,193 @@ export function TradePanel({
         </span>
       </div>
 
-      <div
-        role="group"
-        aria-label="Choose side"
-        className="mt-4 grid grid-cols-2 gap-2"
-      >
-        <button
-          onClick={() => selectSide("YES")}
-          aria-pressed={side === "YES"}
-          className={cn(
-            "inline-flex h-11 items-center justify-center rounded-[10px] text-sm font-bold transition-all",
-            side === "YES"
-              ? "bg-success text-white shadow-sm"
-              : "bg-success-light text-success hover:bg-success/20"
-          )}
-        >
-          YES {probability}%
-        </button>
-        <button
-          onClick={() => selectSide("NO")}
-          aria-pressed={side === "NO"}
-          className={cn(
-            "inline-flex h-11 items-center justify-center rounded-[10px] text-sm font-bold transition-all",
-            side === "NO"
-              ? "bg-danger text-white shadow-sm"
-              : "bg-danger-light text-danger hover:bg-danger/20"
-          )}
-        >
-          NO {100 - probability}%
-        </button>
-      </div>
-
-      {!side ? (
-        <p className="mt-4 rounded-[10px] bg-background px-3 py-2 text-center text-xs text-text-secondary">
-          Select YES or NO to start trading
-        </p>
+      {isClosed ? (
+        <div className="mt-4 rounded-[12px] bg-background p-4 text-center">
+          <p className="text-sm font-semibold text-text-primary">
+            {status === "RESOLVED" ? "Market resolved" : "Market closed"}
+          </p>
+          <p className="mt-1 text-xs text-text-secondary">
+            {status === "RESOLVED"
+              ? "This market has settled and is no longer tradable."
+              : "Trading has ended for this market."}
+          </p>
+        </div>
       ) : (
-        <form onSubmit={onSubmit} className="mt-4 space-y-4" noValidate>
-          {degenerate && (
-            <p className="rounded-[10px] bg-danger-light px-3 py-2 text-xs font-semibold text-danger">
-              Trading is temporarily unavailable for this side while the market
-              settles.
-            </p>
-          )}
-          <div>
-            <FieldLabel htmlFor="amount">Amount</FieldLabel>
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-muted">
-                $
-              </span>
-              <Controller
-                render={({ field }) => (
-                  <Input
-                    id="amount"
-                    type="number"
-                    min="1"
-                    step="0.01"
-                    placeholder="0.00"
-                    inputMode="decimal"
-                    className="pl-7 text-base font-bold"
-                    invalid={Boolean(errors.amount) || insufficient}
-                    {...field}
-                  />
-                )}
-                control={control}
-                name="amount"
-              />
-            </div>
-            <FieldError>{errors.amount?.message}</FieldError>
-            {insufficient && (
-              <FieldError>
-                Insufficient {tradingMode === "DEMO" ? "virtual" : ""} balance.
-              </FieldError>
-            )}
-            <div className="mt-2 flex items-center justify-between text-xs text-text-muted">
-              <span>Balance: {formatCurrency(balance)}</span>
-              <span>
-                Price @ {side} {formatCurrency(selectedPrice)}
-              </span>
-            </div>
-          </div>
-
-          <div className="space-y-2 rounded-[12px] bg-background p-3.5">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-text-secondary">Potential Return</span>
-              <span className="font-bold text-text-primary">
-                {formatCurrency(potentialReturn)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-text-secondary">Estimated Profit</span>
-              <span
-                className={cn(
-                  "number-tight font-bold",
-                  estimatedProfit >= 0 ? "text-success" : "text-danger"
-                )}
-              >
-                {estimatedProfit >= 0 ? "+" : ""}${estimatedProfit.toFixed(2)}
-              </span>
-            </div>
-            {tradingMode === "REAL" && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-text-secondary">Estimated Fees</span>
-                <span className="font-semibold text-text-secondary">$0.00</span>
-              </div>
-            )}
-          </div>
-
-          <Button
-            type="submit"
-            className="h-11 w-full text-base"
-            disabled={!isValid || insufficient || numericAmount <= 0 || degenerate}
+        <>
+          <div
+            role="group"
+            aria-label="Choose side"
+            className="mt-4 grid grid-cols-2 gap-2"
           >
-            {tradingMode === "DEMO" ? "Place Demo Trade" : "Place Trade"}
-          </Button>
-        </form>
-      )}
-
-      <Modal open={confirming} onOpenChange={setConfirming}>
-        <ModalContent>
-          <ModalHeader>
-            <ModalTitle>Confirm trade</ModalTitle>
-            <ModalDescription>
-              Review your order before placing it.
-            </ModalDescription>
-          </ModalHeader>
-
-          <div className="rounded-[12px] border border-border bg-background p-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-xs text-text-muted">Side</p>
-                <p className="mt-0.5 font-bold text-text-primary">
-                  {side === "YES" ? "YES" : "NO"} @{" "}
-                  {formatCurrency(selectedPrice)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-text-muted">Amount</p>
-                <p className="number-tight mt-0.5 font-bold text-text-primary">
-                  {formatCurrency(numericAmount)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-text-muted">Potential Return</p>
-                <p className="number-tight mt-0.5 font-bold text-success">
-                  {formatCurrency(potentialReturn)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-text-muted">Estimated Profit</p>
-                <p className="number-tight mt-0.5 font-bold text-text-primary">
-                  +{formatCurrency(estimatedProfit)}
-                </p>
-              </div>
-            </div>
-            <Separator className="my-3" />
-            <p className="text-xs text-text-muted">{marketTitle}</p>
+            <button
+              onClick={() => selectSide("YES")}
+              aria-pressed={side === "YES"}
+              className={cn(
+                "inline-flex h-11 items-center justify-center rounded-[10px] text-sm font-bold transition-all",
+                side === "YES"
+                  ? "bg-success text-white shadow-sm"
+                  : "bg-success-light text-success hover:bg-success/20"
+              )}
+            >
+              YES {probability}%
+            </button>
+            <button
+              onClick={() => selectSide("NO")}
+              aria-pressed={side === "NO"}
+              className={cn(
+                "inline-flex h-11 items-center justify-center rounded-[10px] text-sm font-bold transition-all",
+                side === "NO"
+                  ? "bg-danger text-white shadow-sm"
+                  : "bg-danger-light text-danger hover:bg-danger/20"
+              )}
+            >
+              NO {100 - probability}%
+            </button>
           </div>
 
-          <ModalFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setConfirming(false)}
-              disabled={processing}
-            >
-              Cancel
-            </Button>
-            <Button onClick={confirmTrade} loading={processing}>
-              {tradingMode === "DEMO" ? "Confirm Demo Trade" : "Confirm Trade"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+          {!side ? (
+            <p className="mt-4 rounded-[10px] bg-background px-3 py-2 text-center text-xs text-text-secondary">
+              Select YES or NO to start trading
+            </p>
+          ) : (
+            <form onSubmit={onSubmit} className="mt-4 space-y-4" noValidate>
+              {degenerate && (
+                <p className="rounded-[10px] bg-danger-light px-3 py-2 text-xs font-semibold text-danger">
+                  Trading is temporarily unavailable for this side while the market
+                  settles.
+                </p>
+              )}
+              <div>
+                <FieldLabel htmlFor="amount">Amount</FieldLabel>
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-muted">
+                    $
+                  </span>
+                  <Controller
+                    render={({ field }) => (
+                      <Input
+                        id="amount"
+                        type="number"
+                        min="1"
+                        step="0.01"
+                        placeholder="0.00"
+                        inputMode="decimal"
+                        className="pl-7 text-base font-bold"
+                        invalid={Boolean(errors.amount) || insufficient}
+                        {...field}
+                      />
+                    )}
+                    control={control}
+                    name="amount"
+                  />
+                </div>
+                <FieldError>{errors.amount?.message}</FieldError>
+                {insufficient && (
+                  <FieldError>
+                    Insufficient {tradingMode === "DEMO" ? "virtual" : ""} balance.
+                  </FieldError>
+                )}
+                <div className="mt-2 flex items-center justify-between text-xs text-text-muted">
+                  <span>Balance: {formatCurrency(balance)}</span>
+                  <span>
+                    Price @ {side} {formatCurrency(selectedPrice)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2 rounded-[12px] bg-background p-3.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-text-secondary">Potential Return</span>
+                  <span className="font-bold text-text-primary">
+                    {formatCurrency(potentialReturn)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-text-secondary">Estimated Profit</span>
+                  <span
+                    className={cn(
+                      "number-tight font-bold",
+                      estimatedProfit >= 0 ? "text-success" : "text-danger"
+                    )}
+                  >
+                    {formatPnL(estimatedProfit)}
+                  </span>
+                </div>
+                {tradingMode === "REAL" && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-text-secondary">Estimated Fees</span>
+                    <span className="font-semibold text-text-secondary">$0.00</span>
+                  </div>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="h-11 w-full text-base"
+                disabled={!isValid || insufficient || numericAmount <= 0 || degenerate}
+              >
+                {tradingMode === "DEMO" ? "Place Demo Trade" : "Place Trade"}
+              </Button>
+            </form>
+          )}
+
+          <Modal open={confirming} onOpenChange={setConfirming}>
+            <ModalContent>
+              <ModalHeader>
+                <ModalTitle>Confirm trade</ModalTitle>
+                <ModalDescription>
+                  Review your order before placing it.
+                </ModalDescription>
+              </ModalHeader>
+
+              <div className="rounded-[12px] border border-border bg-background p-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-xs text-text-muted">Side</p>
+                    <p className="mt-0.5 font-bold text-text-primary">
+                      {side === "YES" ? "YES" : "NO"} @{" "}
+                      {formatCurrency(selectedPrice)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-text-muted">Amount</p>
+                    <p className="number-tight mt-0.5 font-bold text-text-primary">
+                      {formatCurrency(numericAmount)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-text-muted">Potential Return</p>
+                    <p className="number-tight mt-0.5 font-bold text-success">
+                      {formatCurrency(potentialReturn)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-text-muted">Estimated Profit</p>
+                    <p className="number-tight mt-0.5 font-bold text-text-primary">
+                      +{formatCurrency(estimatedProfit)}
+                    </p>
+                  </div>
+                </div>
+                <Separator className="my-3" />
+                <p className="text-xs text-text-muted">{marketTitle}</p>
+              </div>
+
+              <ModalFooter>
+                <Button
+                  variant="secondary"
+                  onClick={() => setConfirming(false)}
+                  disabled={processing}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={confirmTrade} loading={processing}>
+                  {tradingMode === "DEMO" ? "Confirm Demo Trade" : "Confirm Trade"}
+                </Button>
+              </ModalFooter>
+            </ModalContent>
+          </Modal>
+        </>
+      )}
     </div>
   );
 }

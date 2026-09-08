@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -42,7 +42,10 @@ function generateData(basePrice: number, range: string, points = 24) {
 
 export function MarketPriceChart({ probability }: { probability: number }) {
   const [range, setRange] = useState<(typeof CHART_RANGES)[number]>("24H");
-  const data = generateData(probability / 100, range);
+  const data = useMemo(
+    () => generateData(probability / 100, range),
+    [probability, range]
+  );
 
   return (
     <div className="space-y-3">

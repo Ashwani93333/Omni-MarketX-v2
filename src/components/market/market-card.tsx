@@ -48,7 +48,10 @@ export function MarketCard({ market }: { market: Market }) {
       </div>
 
       <div className="mt-4 border-t border-border-light pt-4">
-        <MarketActionButtons marketId={market.id} />
+        <MarketActionButtons
+            marketId={market.id}
+            disabled={market.status !== "OPEN"}
+          />
       </div>
     </MarketLink>
   );
