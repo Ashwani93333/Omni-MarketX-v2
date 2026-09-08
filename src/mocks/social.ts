@@ -1,0 +1,223 @@
+import type { Comment, NotificationItem, Post, User } from "@/types";
+
+export const socialUsers: User[] = [
+  {
+    id: "s-001",
+    username: "alexriver",
+    displayName: "Alex River",
+    initials: "AR",
+  },
+  {
+    id: "s-002",
+    username: "miacrypto",
+    displayName: "Mia Crypto",
+    initials: "MC",
+  },
+  {
+    id: "s-003",
+    username: "kadanster",
+    displayName: "Kaden Sterling",
+    initials: "KS",
+  },
+  {
+    id: "s-004",
+    username: "novahodl",
+    displayName: "Nova Hodl",
+    initials: "NH",
+  },
+  {
+    id: "s-005",
+    username: "riskqueen",
+    displayName: "RiskQueen",
+    initials: "RQ",
+  },
+];
+
+export const comments: Comment[] = [
+  {
+    id: "c-001",
+    user: socialUsers[1],
+    content:
+      "I think 63% is overpriced. The last release window slipped twice.",
+    time: "12m ago",
+    likes: 8,
+  },
+  {
+    id: "c-002",
+    user: socialUsers[3],
+    content: "Adding NO here. Tight risk/reward.",
+    time: "8m ago",
+    likes: 3,
+  },
+];
+
+export const posts: Post[] = [
+  {
+    id: "post-001",
+    user: socialUsers[1],
+    content:
+      "Gut check: BTC staying above $74K into the weekend feels strong. Who else is holding YES into the close?",
+    time: "9m ago",
+    likes: 34,
+    comments: 12,
+    shares: 5,
+    liked: false,
+    market: {
+      id: "m-002",
+      title: "Will Bitcoin close above $75,000 by the end of September?",
+      category: "Crypto",
+      probability: 41,
+      volume: 289400,
+      traderCount: 3102,
+      status: "OPEN",
+      createdAt: "2026-09-02T08:30:00Z",
+    },
+  },
+  {
+    id: "post-002",
+    user: socialUsers[3],
+    content:
+      "Ran the numbers on the earnings beat series — the media is underselling subscriber growth this quarter.",
+    time: "1h ago",
+    likes: 21,
+    comments: 4,
+    shares: 2,
+    liked: false,
+  },
+  {
+    id: "post-003",
+    user: socialUsers[2],
+    content: "Poll for the community 👇",
+    time: "2h ago",
+    likes: 48,
+    comments: 27,
+    shares: 9,
+    liked: false,
+    poll: {
+      question: "Which market are you most bullish on this week?",
+      options: [
+        { label: "Bitcoin $75K", votes: 320 },
+        { label: "AI flagship announcement", votes: 214 },
+        { label: "Streaming subscribers", votes: 156 },
+        { label: "Blockbuster opening week", votes: 98 },
+      ],
+      totalVotes: 788,
+    },
+  },
+  {
+    id: "post-004",
+    user: socialUsers[0],
+    content:
+      "Locking in a small runner on the AI flagship market. The leak timeline lines up with Q4 guidance.",
+    time: "3h ago",
+    likes: 19,
+    comments: 6,
+    shares: 1,
+    liked: false,
+    market: {
+      id: "m-014",
+      title: "Will the AI chipmaker announce a new flagship before Q4?",
+      category: "Tech",
+      probability: 74,
+      volume: 112400,
+      traderCount: 1945,
+      status: "OPEN",
+      createdAt: "2026-09-01T10:30:00Z",
+    },
+  },
+  {
+    id: "post-005",
+    user: socialUsers[4],
+    content:
+      "Weekly P&L review coming up. Sticking to a 2% risk per trade has kept me in the top 50 all month.",
+    time: "5h ago",
+    likes: 87,
+    comments: 15,
+    shares: 11,
+    liked: false,
+  },
+];
+
+export const stories = [
+  {
+    id: "st-001",
+    user: socialUsers[0],
+    initials: "AR",
+    hasStory: false,
+  },
+  {
+    id: "st-002",
+    user: socialUsers[1],
+    initials: "MC",
+    hasStory: true,
+  },
+  {
+    id: "st-003",
+    user: socialUsers[2],
+    initials: "KS",
+    hasStory: true,
+  },
+  {
+    id: "st-004",
+    user: socialUsers[3],
+    initials: "NH",
+    hasStory: false,
+  },
+  {
+    id: "st-005",
+    user: socialUsers[4],
+    initials: "RQ",
+    hasStory: true,
+  },
+];
+
+export const notifications: NotificationItem[] = [
+  {
+    id: "n-001",
+    type: "trade",
+    title: "Trade executed",
+    description: "Your YES order on Bitcoin $75K filled at 0.41.",
+    time: "2m ago",
+    read: false,
+  },
+  {
+    id: "n-002",
+    type: "comment",
+    title: "New comment",
+    description: "Kaden Sterling commented on your post.",
+    time: "18m ago",
+    read: false,
+  },
+  {
+    id: "n-003",
+    type: "follow",
+    title: "New follower",
+    description: "Nova Hodl started following you.",
+    time: "1h ago",
+    read: false,
+  },
+  {
+    id: "n-004",
+    type: "market",
+    title: "Market resolved",
+    description: "Space station launch module resolved NO.",
+    time: "3h ago",
+    read: true,
+  },
+  {
+    id: "n-005",
+    type: "reward",
+    title: "Reward earned",
+    description: "You earned +25 USDC referral reward.",
+    time: "5h ago",
+    read: true,
+  },
+  {
+    id: "n-006",
+    type: "group",
+    title: "Group invite",
+    description: "You were invited to Crypto Traders Daily.",
+    time: "8h ago",
+    read: true,
+  },
+];
