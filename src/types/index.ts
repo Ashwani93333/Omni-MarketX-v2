@@ -227,3 +227,37 @@ export interface TraderProfile {
   };
   recentPositions: TraderPosition[];
 }
+
+export interface PnLPoint {
+  time: string;
+  value: number;
+}
+
+export interface TradingAnalytics {
+  series: PnLPoint[];
+  kpis: {
+    winRate: number;
+    avgWin: number;
+    avgLoss: number;
+    profitFactor: number;
+    bestDay: number;
+    worstDay: number;
+    trades: number;
+    netPnl: number;
+  };
+}
+
+export type AchievementTier = "bronze" | "silver" | "gold" | "platinum";
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  tier: AchievementTier;
+  progress: number;
+  target: number;
+  unlocked: boolean;
+  points: number;
+  unlockDate?: string;
+}

@@ -7,6 +7,7 @@ import {
   HelpCircle,
   LogOut,
   Settings,
+  Trophy,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -80,6 +81,12 @@ export function ProfileMenu() {
           <Link href="/portfolio">
             <ChartSpline className="h-4 w-4" />
             Portfolio
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/achievements">
+            <Trophy className="h-4 w-4 text-orange" />
+            Achievements
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

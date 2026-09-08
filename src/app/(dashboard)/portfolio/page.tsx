@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Briefcase } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { TradingAnalytics } from "@/components/analytics/trading-analytics";
 import { PageHeader } from "@/components/layout/page-header";
 import { PositionCard } from "@/components/portfolio/position-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/ui/stat-card";
+import { MOCK_CURRENT_USER } from "@/constants";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { portfolioService } from "@/services/wallet.service";
@@ -70,6 +72,8 @@ export default function PortfolioPage() {
             accent="blue"
           />
         </div>
+
+        <TradingAnalytics userId={MOCK_CURRENT_USER.id} />
 
         <Card>
           <CardHeader>

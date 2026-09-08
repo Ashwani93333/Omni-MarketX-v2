@@ -426,3 +426,44 @@ New dynamic route `/users/[userId]` (async server page + client component). Head
 ### 9.7 Still to build (P1)
 Open Orders, Trading Analytics, Achievements, Market Heatmap.
 (Trader Profiles + Follow Traders — done.)
+
+---
+
+## 10. Feature roadmap — P1 batch 3: Trading Analytics + Achievements
+
+### 10.1 Types
+**File:** `src/types/index.ts` — added `PnLPoint`, `TradingAnalytics`, `Achievement`,
+`AchievementTier`.
+
+### 10.2 Analytics data
+**Files:** `src/mocks/analytics.ts`, `src/services/analytics.service.ts`
+
+Deterministic daily P&L equity series (30 points ending at the demo user's real net
+P&L, $884.12) and performance KPIs (win rate, avg win/loss, profit factor, best/worst
+day, trades, net P&L) via the shared PRNG. `analyticsService.getTradingAnalytics(userId)`
+and `getAchievements()`.
+
+### 10.3 Trading Analytics card
+**Files:** `src/components/analytics/trading-analytics.tsx`
+
+Recharts equity curve (7D/30D toggle, green/red by net P&L, currency tooltip) plus an
+8-tile KPI grid. Embedded on the **Portfolio page** between the stat tiles and Open
+Positions (`src/app/(dashboard)/portfolio/page.tsx`).
+
+### 10.4 Achievements
+**Files:** `src/mocks/analytics.ts` (catalog), `src/components/achievements/achievement-card.tsx`,
+`src/app/(dashboard)/achievements/page.tsx`
+
+Catalog of 10 achievements across bronze/silver/gold/platinum tiers (icon, description,
+progress bar, points, earn date). The `/achievements` page shows a Badges-Earned + Total
+Points summary and a responsive card grid. Reachable from the profile menu
+(`profile-menu.tsx` → Trophy link).
+
+### 10.5 Verification
+| Check | Result |
+| --- | --- |
+| `npx eslint <changed files>` | 0 errors (fixed 2 self-introduced warnings) |
+| `npm run build` | ✓ Compiled (5.5s) · ✓ TypeScript passed · ✓ new `/achievements` route (22 total) |
+
+### 10.6 Still to build (P1)
+Open Orders, Market Heatmap. (Trading Analytics + Achievements — done.)
