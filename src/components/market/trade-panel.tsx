@@ -20,10 +20,15 @@ import {
 } from "@/components/ui/modal";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { formatCurrency, formatPnL } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 import { useAppStore } from "@/store/app-store";
 import { useTradingStore } from "@/store/trading-store";
 import type { MarketStatus } from "@/types";
+
+const FEE_RATE = 0.002;
+const MIN_TRADE = 10;
+const MAX_TRADE = 5000;
+const QUICK_AMOUNTS = [5, 10, 20, 40];
 
 const tradeSchema = z.object({
   amount: z.string().regex(/^\d+(\.\d{1,2})?$/, "Enter a valid amount"),
@@ -32,6 +37,26 @@ const tradeSchema = z.object({
 type TradeForm = z.infer<typeof tradeSchema>;
 
 type TradeResult = "success" | "failure" | null;
+
+type TradeAction = "BUY" | "SELL";
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+const fmtUsdc = (n: number) =>
+  `${n.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} USDC`;
+
+const fmtShares = (n: number) =>
+  `${n.toLocaleString("en-US", {
+    maximumFractionDigits: 2,
+  })}`;
+
+const toCents = (p: number) => {
+  const v = Math.round(p * 10) / 10;
+  return `${v % 1 === 0 ? v : v.toFixed(1)}¢`;
+};
 
 export function TradePanel({
   marketId,
@@ -52,21 +77,32 @@ export function TradePanel({
     const t = searchParams.get("trade");
     return t === "YES" || t === "NO" ? t : null;
   });
+  const [action, setAction] = useState<TradeAction>("BUY");
   const [confirming, setConfirming] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [tradeResult, setTradeResult] = useState<TradeResult>(null);
   const balance = useTradingStore((s) => s.balance);
+  const positions = useTradingStore((s) => s.positions);
   const placeTrade = useTradingStore((s) => s.placeTrade);
+  const sellPosition = useTradingStore((s) => s.sellPosition);
   const tradingMode = useAppStore((s) => s.tradingMode);
 
   const isClosed = status !== "OPEN";
-  const selectedPrice = side === "YES" ? probability / 100 : 1 - probability / 100;
+  const isBuy = action === "BUY";
+  const selectedPrice =
+    side === "YES" ? probability / 100 : 1 - probability / 100;
   const degenerate = selectedPrice <= 0.01;
+  const holding = side
+    ? positions.find((p) => p.marketId === marketId && p.side === side)
+    : undefined;
+  const sharesHeld = holding?.shares ?? 0;
+  const averagePrice = holding?.averagePrice ?? selectedPrice;
 
   const {
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isValid },
   } = useForm<TradeForm>({
     resolver: zodResolver(tradeSchema),
@@ -74,11 +110,41 @@ export function TradePanel({
     defaultValues: { amount: "" },
   });
 
+  const setAmount = (v: string) =>
+    setValue("amount", v, { shouldValidate: true });
+
   const amount = watch("amount");
   const numericAmount = Number(amount) || 0;
-  const potentialReturn = numericAmount / Math.max(selectedPrice, 0.01);
-  const estimatedProfit = potentialReturn - numericAmount;
+  const shares = numericAmount / Math.max(selectedPrice, 0.01);
+  const fees = round2(numericAmount * FEE_RATE);
+
+  let payout = 0;
+  let total = 0;
+  let profit = 0;
+  if (isBuy) {
+    payout = round2(shares);
+    total = round2(numericAmount + fees);
+    profit = round2(payout - total);
+  } else {
+    const costBasis = round2(Math.min(shares, sharesHeld) * averagePrice);
+    payout = round2(numericAmount);
+    total = round2(Math.max(numericAmount - fees, 0));
+    profit = round2(numericAmount - costBasis - fees);
+  }
+
   const insufficient = numericAmount > balance;
+  const outOfRange =
+    numericAmount > 0 &&
+    (numericAmount < MIN_TRADE || numericAmount > MAX_TRADE);
+  const noShares = sharesHeld <= 0;
+  const notEnoughShares = !noShares && shares > sharesHeld;
+
+  const canSubmit =
+    Boolean(side) &&
+    isValid &&
+    numericAmount > 0 &&
+    !outOfRange &&
+    (isBuy ? !insufficient && !degenerate : !noShares && !notEnoughShares);
 
   const selectSide = (s: "YES" | "NO") => {
     setSide(s);
@@ -97,25 +163,33 @@ export function TradePanel({
     if (!side) return;
     setProcessing(true);
     try {
-      await placeTrade({
-        marketId,
-        marketTitle,
-        side,
-        amount: numericAmount,
-        price: selectedPrice,
-      });
+      if (isBuy) {
+        await placeTrade({
+          marketId,
+          marketTitle,
+          side,
+          amount: numericAmount,
+          price: selectedPrice,
+        });
+      } else {
+        await sellPosition({
+          marketId,
+          marketTitle,
+          side,
+          amount: numericAmount,
+          price: selectedPrice,
+        });
+      }
       setConfirming(false);
       setTradeResult("success");
       toast.success(
-        tradingMode === "DEMO"
-          ? `Demo trade placed: ${side} ${formatCurrency(numericAmount)}`
-          : `Trade placed: ${side} ${formatCurrency(numericAmount)}`
+        `${tradingMode === "DEMO" ? "Demo " : ""}${isBuy ? "Bought" : "Sold"} ${side} ${formatCurrency(numericAmount)}`
       );
       onSuccess?.();
     } catch {
       setConfirming(false);
       setTradeResult("failure");
-      toast.error("Trade failed. Please try again.");
+      toast.error(isBuy ? "Trade failed. Please try again." : "No shares to sell. Please try again.");
     } finally {
       setProcessing(false);
     }
@@ -144,11 +218,13 @@ export function TradePanel({
                 tradeResult === "success" ? "text-success" : "text-danger"
               )}
             >
-              {tradeResult === "success" ? "Trade Placed Successfully" : "Trade Failed"}
+              {tradeResult === "success"
+                ? "Trade Placed Successfully"
+                : "Trade Failed"}
             </p>
             <p className="mt-1 text-sm text-text-secondary">
               {tradeResult === "success"
-                ? `You ${side} ${formatCurrency(numericAmount)} on "${marketTitle}"`
+                ? `You ${isBuy ? "bought" : "sold"} ${side} ${formatCurrency(numericAmount)} on "${marketTitle}"`
                 : "Something went wrong. Please try again."}
             </p>
           </div>
@@ -166,11 +242,30 @@ export function TradePanel({
 
   return (
     <div className="rounded-[16px] border border-border bg-surface p-5">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-bold text-text-primary">Trade</h3>
-        <span className="text-xs font-medium text-text-muted">
-          {tradingMode === "DEMO" ? "Demo \u00B7 Virtual USDC" : "Real \u00B7 Live funds"}
-        </span>
+      <div
+        role="tablist"
+        aria-label="Trade action"
+        className="grid grid-cols-2 gap-1 rounded-[10px] bg-background p-1"
+      >
+        {(["BUY", "SELL"] as const).map((a) => (
+          <button
+            key={a}
+            role="tab"
+            aria-selected={action === a}
+            onClick={() => {
+              setAction(a);
+              setTradeResult(null);
+            }}
+            className={cn(
+              "h-9 rounded-[8px] text-sm font-bold capitalize transition-colors",
+              action === a
+                ? "bg-surface text-text-primary shadow-sm"
+                : "text-text-muted hover:text-text-primary"
+            )}
+          >
+            {a.toLowerCase()}
+          </button>
+        ))}
       </div>
 
       {isClosed ? (
@@ -188,33 +283,129 @@ export function TradePanel({
         <>
           <div
             role="group"
-            aria-label="Choose side"
-            className="mt-4 grid grid-cols-2 gap-2"
+            aria-label="Choose outcome"
+            className="mt-3 grid grid-cols-2 gap-2"
           >
             <button
               onClick={() => selectSide("YES")}
               aria-pressed={side === "YES"}
               className={cn(
-                "inline-flex h-11 items-center justify-center rounded-[10px] text-sm font-bold transition-all",
+                "inline-flex h-10 items-center justify-between gap-2 rounded-[10px] px-3 text-sm font-bold transition-all",
                 side === "YES"
                   ? "bg-success text-white shadow-sm"
                   : "bg-success-light text-success hover:bg-success/20"
               )}
             >
-              YES {probability}%
+              <span>YES</span>
+              <span>{toCents(probability)}</span>
             </button>
             <button
               onClick={() => selectSide("NO")}
               aria-pressed={side === "NO"}
               className={cn(
-                "inline-flex h-11 items-center justify-center rounded-[10px] text-sm font-bold transition-all",
+                "inline-flex h-10 items-center justify-between gap-2 rounded-[10px] px-3 text-sm font-bold transition-all",
                 side === "NO"
                   ? "bg-danger text-white shadow-sm"
                   : "bg-danger-light text-danger hover:bg-danger/20"
               )}
             >
-              NO {100 - probability}%
+              <span>NO</span>
+              <span>{toCents(100 - probability)}</span>
             </button>
+          </div>
+
+          <p className="mt-3 text-xs text-text-muted">
+            Your Balance{" "}
+            <span className="font-semibold text-text-primary">
+              {fmtUsdc(balance)}
+            </span>{" "}
+            {tradingMode === "DEMO" ? "(Demo)" : ""}
+          </p>
+
+          <div className="mt-4">
+            <div className="grid grid-cols-5 gap-1.5">
+              {QUICK_AMOUNTS.map((a) => {
+                const selected = Number(amount) === a;
+                return (
+                  <button
+                    key={a}
+                    type="button"
+                    onClick={() => setAmount(a.toString())}
+                    aria-pressed={selected}
+                    className={cn(
+                      "h-9 rounded-[8px] text-sm font-bold transition-colors",
+                      selected
+                        ? "bg-primary text-white shadow-sm"
+                        : "bg-background text-text-secondary hover:bg-border"
+                    )}
+                  >
+                    {a}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                aria-pressed={QUICK_AMOUNTS.every((a) => Number(amount) !== a)}
+                className={cn(
+                  "h-9 rounded-[8px] text-xs font-bold transition-colors",
+                  QUICK_AMOUNTS.every((a) => Number(amount) !== a)
+                    ? "bg-primary text-white shadow-sm"
+                    : "bg-background text-text-secondary hover:bg-border"
+                )}
+              >
+                Custom
+              </button>
+            </div>
+
+            <div className="mt-2.5">
+              <FieldLabel htmlFor="amount">Amount</FieldLabel>
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-muted">
+                  $
+                </span>
+                <Controller
+                  render={({ field }) => (
+                    <Input
+                      id="amount"
+                      type="number"
+                      min="1"
+                      step="0.01"
+                      placeholder="0.00"
+                      inputMode="decimal"
+                      className="pl-7 text-base font-bold"
+                      invalid={Boolean(errors.amount) || (isBuy && insufficient) || outOfRange}
+                      {...field}
+                    />
+                  )}
+                  control={control}
+                  name="amount"
+                />
+              </div>
+              <FieldError>{errors.amount?.message}</FieldError>
+              {isBuy && insufficient && (
+                <FieldError>Insufficient balance.</FieldError>
+              )}
+              {outOfRange && (
+                <FieldError>
+                  Minimum ${MIN_TRADE.toFixed(2)} · Maximum $
+                  {MAX_TRADE.toLocaleString()}.00
+                </FieldError>
+              )}
+              {!isBuy && noShares && (
+                <p className="mt-1.5 rounded-[10px] bg-danger-light px-3 py-2 text-xs font-semibold text-danger">
+                  You don&rsquo;t hold any {side} shares in this market yet.
+                </p>
+              )}
+              {!isBuy && !noShares && notEnoughShares && (
+                <p className="mt-1.5 rounded-[10px] bg-danger-light px-3 py-2 text-xs font-semibold text-danger">
+                  Insufficient {side} shares — you hold {sharesHeld}.
+                </p>
+              )}
+              <p className="mt-1.5 text-[11px] text-text-muted">
+                Minimum trade ${MIN_TRADE.toFixed(2)} · Maximum $
+                {MAX_TRADE.toLocaleString()}.00
+              </p>
+            </div>
           </div>
 
           {!side ? (
@@ -222,85 +413,52 @@ export function TradePanel({
               Select YES or NO to start trading
             </p>
           ) : (
-            <form onSubmit={onSubmit} className="mt-4 space-y-4" noValidate>
-              {degenerate && (
-                <p className="rounded-[10px] bg-danger-light px-3 py-2 text-xs font-semibold text-danger">
-                  Trading is temporarily unavailable for this side while the market
-                  settles.
+            <>
+              {degenerate && isBuy && (
+                <p className="mt-4 rounded-[10px] bg-danger-light px-3 py-2 text-xs font-semibold text-danger">
+                  Trading is temporarily unavailable for this side while the
+                  market settles.
                 </p>
               )}
-              <div>
-                <FieldLabel htmlFor="amount">Amount</FieldLabel>
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-muted">
-                    $
-                  </span>
-                  <Controller
-                    render={({ field }) => (
-                      <Input
-                        id="amount"
-                        type="number"
-                        min="1"
-                        step="0.01"
-                        placeholder="0.00"
-                        inputMode="decimal"
-                        className="pl-7 text-base font-bold"
-                        invalid={Boolean(errors.amount) || insufficient}
-                        {...field}
-                      />
-                    )}
-                    control={control}
-                    name="amount"
-                  />
-                </div>
-                <FieldError>{errors.amount?.message}</FieldError>
-                {insufficient && (
-                  <FieldError>
-                    Insufficient {tradingMode === "DEMO" ? "virtual" : ""} balance.
-                  </FieldError>
-                )}
-                <div className="mt-2 flex items-center justify-between text-xs text-text-muted">
-                  <span>Balance: {formatCurrency(balance)}</span>
-                  <span>
-                    Price @ {side} {formatCurrency(selectedPrice)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-2 rounded-[12px] bg-background p-3.5">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-text-secondary">Potential Return</span>
-                  <span className="font-bold text-text-primary">
-                    {formatCurrency(potentialReturn)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-text-secondary">Estimated Profit</span>
-                  <span
-                    className={cn(
-                      "number-tight font-bold",
-                      estimatedProfit >= 0 ? "text-success" : "text-danger"
-                    )}
-                  >
-                    {formatPnL(estimatedProfit)}
-                  </span>
-                </div>
-                {tradingMode === "REAL" && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-text-secondary">Estimated Fees</span>
-                    <span className="font-semibold text-text-secondary">$0.00</span>
+              <form onSubmit={onSubmit} className="mt-4 space-y-4" noValidate>
+                <div className="space-y-2 rounded-[12px] bg-background p-3.5">
+                  <SummaryRow label="Shares (approx.)">
+                    ~{fmtShares(shares)}
+                  </SummaryRow>
+                  <SummaryRow label={isBuy ? "Est. Payout" : "Est. Credit"}>
+                    {fmtUsdc(payout)}
+                  </SummaryRow>
+                  <SummaryRow label="Fees">{fmtUsdc(fees)}</SummaryRow>
+                  <SummaryRow label="Est. Total">{fmtUsdc(total)}</SummaryRow>
+                  <Separator />
+                  <div className="flex items-center justify-between pt-1 text-sm">
+                    <span className="text-text-secondary">Potential Profit</span>
+                    <span
+                      className={cn(
+                        "number-tight font-bold",
+                        profit >= 0 ? "text-success" : "text-danger"
+                      )}
+                    >
+                      {profit > 0 ? "+" : profit < 0 ? "-" : ""}
+                      {Math.abs(profit).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}{" "}
+                      USDC
+                    </span>
                   </div>
-                )}
-              </div>
+                </div>
 
-              <Button
-                type="submit"
-                className="h-11 w-full text-base"
-                disabled={!isValid || insufficient || numericAmount <= 0 || degenerate}
-              >
-                {tradingMode === "DEMO" ? "Place Demo Trade" : "Place Trade"}
-              </Button>
-            </form>
+                <Button
+                  type="submit"
+                  variant={side === "YES" ? "success" : "destructive"}
+                  className="h-11 w-full text-base"
+                  disabled={!canSubmit}
+                >
+                  {isBuy ? "Buy" : "Sell"} {side}
+                </Button>
+              </form>
+            </>
           )}
 
           <Modal open={confirming} onOpenChange={setConfirming}>
@@ -315,10 +473,15 @@ export function TradePanel({
               <div className="rounded-[12px] border border-border bg-background p-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
+                    <p className="text-xs text-text-muted">Action</p>
+                    <p className="mt-0.5 font-bold text-text-primary">
+                      {isBuy ? "Buy" : "Sell"}
+                    </p>
+                  </div>
+                  <div>
                     <p className="text-xs text-text-muted">Side</p>
                     <p className="mt-0.5 font-bold text-text-primary">
-                      {side === "YES" ? "YES" : "NO"} @{" "}
-                      {formatCurrency(selectedPrice)}
+                      {side} @ {formatCurrency(selectedPrice)}
                     </p>
                   </div>
                   <div>
@@ -328,15 +491,23 @@ export function TradePanel({
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-text-muted">Potential Return</p>
+                    <p className="text-xs text-text-muted">
+                      {isBuy ? "Est. Payout" : "Est. Credit"}
+                    </p>
                     <p className="number-tight mt-0.5 font-bold text-success">
-                      {formatCurrency(potentialReturn)}
+                      {formatCurrency(payout)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-text-muted">Fees</p>
+                    <p className="number-tight mt-0.5 font-semibold text-text-secondary">
+                      {formatCurrency(fees)}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-text-muted">Estimated Profit</p>
                     <p className="number-tight mt-0.5 font-bold text-text-primary">
-                      +{formatCurrency(estimatedProfit)}
+                      +{formatCurrency(profit)}
                     </p>
                   </div>
                 </div>
@@ -353,13 +524,28 @@ export function TradePanel({
                   Cancel
                 </Button>
                 <Button onClick={confirmTrade} loading={processing}>
-                  {tradingMode === "DEMO" ? "Confirm Demo Trade" : "Confirm Trade"}
+                  Confirm {isBuy ? "Buy" : "Sell"}
                 </Button>
               </ModalFooter>
             </ModalContent>
           </Modal>
         </>
       )}
+    </div>
+  );
+}
+
+function SummaryRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between text-sm">
+      <span className="text-text-secondary">{label}</span>
+      <span className="number-tight font-bold text-text-primary">{children}</span>
     </div>
   );
 }

@@ -41,6 +41,7 @@ All changes are verified with:
 | 26 | Plan downgrade guard + duplicate toast fix (2026-09-09) | A Pro user could switch back to Free with one click, and "Exit Demo" fired two toasts for a single click - the Free plan is now locked once Pro is active, and the profile-menu duplicate toast was removed (details below). |
 | 27 | Editable profile: Settings now actually saves (2026-09-09) | The username in Settings looked editable but saving only fired a toast - added a single persisted identity store (`omx-user`) that Settings writes to and header/onboarding/social read from, so edits persist everywhere (details below). |
 | 28 | Messages & Notifications header interactions (2026-09-09) | The header message icon was a stub that redirected to /social and notifications only existed as a dropdown with no page - built a real `/messages` experience and a `/notifications` page, backed by two shared persisted stores so header badges unread counts match the pages, plus Feedback tab + floating support chat on both pages (details below). |
+| 29 | Market trade panel redesigned to spec card (2026-09-09) | The market-detail order card used YES/NO buttons + a plain amount field. Rebuilt it to the reference "Buy/Sell" card: Buy/Sell tabs, YES/NO price chips (93.5&#162; / 6.5&#162;), balance line, quick-amount chips (5/10/20/40/Custom), a min/max rule ($10 - $5000), and an order summary (Shares approx, Est. Payout/Credit, Fees @ 0.2%, Est. Total, Potential Profit). Selling is now real: `sellPosition` credits the balance and reduces/removes held shares, with "no/in-sufficient shares" guards (details below). |
 
 ---
 
@@ -1330,7 +1331,7 @@ pm run build | compiled, TypeScript passed, 25 routes |
 
 **Requested:** Clicking the bell was supposed to open a usable notifications
 experience, and the message icon was a stub that just pushed to /social with a
-toast. The task: make both header icons real — a full "Notifications" page
+toast. The task: make both header icons real ï¿½ a full "Notifications" page
 (with working filters, a summary sidebar and mark-as-read) and a full
 "Messages" experience (conversation list -> select -> chat -> send), all
 desktop/tablet/mobile responsive, sharing state so header badges never drift
@@ -1416,3 +1417,49 @@ px eslint . (whole project) | 0 errors (only pre-existing warnings: watch()-base
 pm run build | compiled, TypeScript passed, 27 routes (added /messages + /notifications) |
 | 
 ode .check-lucide.mjs | all runtime icons exist (type-only LucideIcon reported as missing is the pre-existing type-import pattern, not a runtime import) |
+
+---
+
+## 29. Market trade panel redesigned to spec card (2026-09-09)
+
+**What:** The market-detail order card was rebuilt to match the reference look
+("Trade" -> Buy | Sell tabs, YES **93.5&#162;** / NO **6.5&#162;** price chips, balance line,
+quick-amount chips, min/max rule, order summary) and selling is now functional.
+
+**Why:** The old panel only offered a Buy-style YES/NO form (no BUY vs SELL
+concept, no per-share price display, no fees/payout breakdown). The reference
+card shows the per-outcome price in cens, quick amount buttons, and a
+Shares/Payout/Fees/Total/Profit breakdown that makes the trade math visible.
+
+### Details
+- **Buy/Sell tabs**: segmented toggle at the top (BUY default).
+- **Outcome chips**: YES shows `probability&#162;`, NO shows `(100-probability)&#162;`
+  (price-in-cens == probability % for a \$1 share); selected chip fills colored.
+- **Balance line**: "Your Balance 9,xxx.xx USDC (Demo)" driven by the trading store.
+- **Quick amounts**: 5 / 10 / 20 / 40 / Custom chips - clicking sets the amount
+  input; "Custom" is active when no preset matches.
+- **Min/max rule**: amounts below \$10.00 or above \$5,000.00 are invalid and show
+  an inline error (input + note below).
+- **Order summary** (on every keystroke):
+  - Shares (approx.) = amount / price
+  - Est. Payout (Buy) = shares x \$1 ; Est. Credit (Sell) = amount
+  - Fees = amount x 0.2% (0.02 on \$10)
+  - Est. Total = amount + fees (Buy) ; net credit amount - fees (Sell)
+  - Potential Profit = payout - total, colored green/red with +/-
+- **Sell is real**: added `sellPosition` to the trading store - validates held
+  shares, credits the balance, appends a Filled trade, and reduces/removes the
+  position. Guards: "You don't hold any {side} shares in this market yet" and
+  "Insufficient {side} shares - you hold N."
+- Submit button reads "Buy YES / Sell NO" and is left/right colored
+  (success/danger). Confirm modal gained an "Action" field and matches the new
+  Buy/Sell wording. Demo toast reflects `Bought`/`Sold`.
+
+### Files
+- Edited: src/components/market/trade-panel.tsx, src/store/trading-store.ts
+  (sellPosition), process.md (this section)
+
+### Verification
+| Check | Result |
+| --- | --- |
+| eslint\n trade-panel.tsx + trading-store.ts | 0 errors (pre-existing React-Compiler watch() warning on trade-panel, same pattern already in the repo) |
+| npm run build | compiled, TypeScript passed |

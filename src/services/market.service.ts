@@ -39,7 +39,8 @@ export const marketService = {
       result = result.filter(
         (m) =>
           m.title.toLowerCase().includes(q) ||
-          m.category.toLowerCase().includes(q)
+          m.category.toLowerCase().includes(q) ||
+          (m.description ?? "").toLowerCase().includes(q)
       );
     }
 

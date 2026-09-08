@@ -17,6 +17,13 @@ interface TradingState {
     amount: number;
     price: number;
   }) => Promise<{ success: boolean }>;
+  sellPosition: (input: {
+    marketId: string;
+    marketTitle: string;
+    side: "YES" | "NO";
+    amount: number;
+    price: number;
+  }) => Promise<{ success: boolean }>;
   deposit: (amount: number) => void;
   resetDemo: () => void;
 }
@@ -83,6 +90,57 @@ export const useTradingStore = create<TradingState>((set, get) => ({
 
     set({
       balance: Math.round((get().balance - amount) * 100) / 100,
+      trades: [trade, ...get().trades],
+      positions,
+    });
+    return { success: true };
+  },
+
+  async sellPosition({ marketId, marketTitle, side, amount, price }) {
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    const safePrice = Math.min(0.99, Math.max(0.01, price));
+    const shares = Math.round(amount / safePrice);
+    const existing = get().positions.find(
+      (p) => p.marketId === marketId && p.side === side
+    );
+
+    if (!existing || existing.shares < shares) {
+      throw new Error("Insufficient shares to sell");
+    }
+
+    let positions: Position[];
+    const remaining = existing.shares - shares;
+    if (remaining <= 0) {
+      positions = get().positions.filter(
+        (p) => !(p.marketId === marketId && p.side === side)
+      );
+    } else {
+      positions = get().positions.map((p) =>
+        p.marketId === marketId && p.side === side
+          ? {
+              ...p,
+              shares: remaining,
+              currentPrice: price,
+              pnl: Math.round((price - p.averagePrice) * remaining * 100) / 100,
+            }
+          : p
+      );
+    }
+
+    const trade: Trade = {
+      id: `tr-${Date.now()}`,
+      date: new Date().toISOString(),
+      market: marketTitle,
+      marketId,
+      side,
+      amount,
+      price,
+      shares,
+      status: "Filled",
+    };
+
+    set({
+      balance: Math.round((get().balance + amount) * 100) / 100,
       trades: [trade, ...get().trades],
       positions,
     });

@@ -29,8 +29,22 @@ export function GlobalSearch() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Market[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const debouncedQuery = useDebouncedValue(query, 350);
+
+  const closeIfFocusLeft = () => {
+    window.setTimeout(() => {
+      const el = document.activeElement as HTMLElement | null;
+      if (
+        !wrapperRef.current?.contains(el) &&
+        !contentRef.current?.contains(el)
+      ) {
+        setOpen(false);
+      }
+    }, 0);
+  };
 
   useEffect(() => {
     const onKeydown = (e: KeyboardEvent) => {
@@ -97,8 +111,11 @@ export function GlobalSearch() {
 
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
-      <PopoverPrimitive.Trigger asChild>
-        <div className="relative min-w-0 w-full max-w-md flex-1">
+      <PopoverPrimitive.Anchor asChild>
+        <div
+          ref={wrapperRef}
+          className="relative min-w-0 w-full max-w-md flex-1"
+        >
           <SearchInput
             ref={inputRef}
             value={query}
@@ -109,6 +126,7 @@ export function GlobalSearch() {
             }}
             placeholder="Search markets, events, users…"
             onFocus={() => setOpen(true)}
+            onBlur={closeIfFocusLeft}
             onClear={() => {
               setQuery("");
               setResults([]);
@@ -127,12 +145,20 @@ export function GlobalSearch() {
             /
           </kbd>
         </div>
-      </PopoverPrimitive.Trigger>
+      </PopoverPrimitive.Anchor>
 
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Content
+          ref={contentRef}
           align="start"
           sideOffset={8}
+          onInteractOutside={(e) => {
+            if (wrapperRef.current?.contains(e.target as Node)) {
+              e.preventDefault();
+            } else {
+              setOpen(false);
+            }
+          }}
           className="z-50 w-[calc(100vw-2rem)] max-w-xl overflow-hidden rounded-[16px] border border-border bg-surface shadow-[var(--shadow-md)]"
         >
           <div className="max-h-[420px] overflow-y-auto p-2">
