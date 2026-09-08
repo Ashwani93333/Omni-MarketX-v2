@@ -1,13 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LogOut } from "lucide-react";
+import { Crown, LogOut } from "lucide-react";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { PageHeader } from "@/components/layout/page-header";
+import { PlanSelector } from "@/components/pricing/plan-selector";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,9 +36,11 @@ import {
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { MOCK_CURRENT_USER } from "@/constants";
+import { getBillingDetails } from "@/constants/pricing";
 import { useAppStore } from "@/store/app-store";
+import { useOnboardingStore } from "@/store/onboarding-store";
 import { useTradingStore } from "@/store/trading-store";
+import { useUserStore } from "@/store/user-store";
 
 const profileSchema = z.object({
   displayName: z.string().min(2, "Display name must be at least 2 characters"),
@@ -51,7 +54,7 @@ const profileSchema = z.object({
 
 type ProfileForm = z.infer<typeof profileSchema>;
 
-const themeOptions = ["light", "dark", "system"] as const;
+const themeOptions = ["light", "dark"] as const;
 
 const modeOptions = ["DEMO", "REAL"] as const;
 
@@ -61,6 +64,8 @@ export default function SettingsPage() {
   const tradingMode = useAppStore((s) => s.tradingMode);
   const setTradingMode = useAppStore((s) => s.setTradingMode);
   const resetDemo = useTradingStore((s) => s.resetDemo);
+  const plan = useOnboardingStore((s) => s.plan);
+  const billingCycle = useOnboardingStore((s) => s.billingCycle);
   const [notify, setNotify] = useState({
     trades: true,
     movement: true,
@@ -70,6 +75,16 @@ export default function SettingsPage() {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [confirmingReset, setConfirmingReset] = useState(false);
 
+  const billingDetails = getBillingDetails(plan, billingCycle);
+  const profile = useUserStore((s) => ({
+    displayName: s.displayName,
+    username: s.username,
+    email: s.email,
+    bio: s.bio,
+    initials: s.initials,
+  }));
+  const setProfile = useUserStore((s) => s.setProfile);
+
   const {
     register,
     handleSubmit,
@@ -77,16 +92,23 @@ export default function SettingsPage() {
   } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      displayName: MOCK_CURRENT_USER.displayName,
-      username: MOCK_CURRENT_USER.username,
-      email: MOCK_CURRENT_USER.email,
-      bio: "Trader. Learner. Occasionally early.",
+      displayName: profile.displayName,
+      username: profile.username,
+      email: profile.email,
+      bio: profile.bio || "Trader. Learner. Occasionally early.",
     },
   });
 
   const onSave = (values: ProfileForm) => {
-    void values;
-    toast.success("Profile updated");
+    setProfile({
+      displayName: values.displayName,
+      username: values.username,
+      email: values.email,
+      bio: values.bio,
+    });
+    toast.success("Profile updated", {
+      description: "Your changes are now live.",
+    });
   };
 
   return (
@@ -110,8 +132,8 @@ export default function SettingsPage() {
               <div className="flex items-center gap-4">
                 <Avatar
                   size="xl"
-                  initials={MOCK_CURRENT_USER.initials}
-                  alt={MOCK_CURRENT_USER.displayName}
+                  initials={profile.initials}
+                  alt={profile.displayName}
                 />
                 <div>
                   <input
@@ -199,6 +221,48 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
+          <Card id="plan" className="scroll-mt-24">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Crown className="h-4 w-4 text-primary" />
+                Plan & Billing
+              </CardTitle>
+              <CardDescription>
+                Choose your plan or switch between monthly and yearly billing.
+                Changes apply instantly in this demo.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-5 flex flex-wrap items-center gap-2 rounded-[14px] border border-border bg-background px-4 py-3 text-sm">
+                <span className="text-xs font-bold uppercase tracking-wide text-text-muted">
+                  Current plan
+                </span>
+                <span className="ml-auto inline-flex items-center gap-1.5 font-bold text-text-primary">
+                  {plan === "PRO" && <Crown className="h-4 w-4 text-primary" />}
+                  {plan === "PRO" ? "OmniMarketX Pro" : "Free"}
+                  <span className="text-xs font-medium text-text-muted">
+                    {plan === "PRO"
+                      ? `— $${billingDetails.perMonth.toFixed(2)}/mo · ${billingCycle.toLowerCase()}`
+                      : "— $0 · forever"}
+                  </span>
+                </span>
+              </div>
+              <PlanSelector
+                onPlanChosen={(chosen) => {
+                  if (chosen === "PRO") {
+                    toast.success("Welcome to Pro!", {
+                      description: "Demo Pro is now active on your account.",
+                    });
+                  } else {
+                    toast.success("You're on the Free plan", {
+                      description: "Upgrade to Pro anytime you like.",
+                    });
+                  }
+                }}
+              />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Preferences</CardTitle>
@@ -211,7 +275,7 @@ export default function SettingsPage() {
                     Appearance
                   </p>
                   <p className="text-sm text-text-muted">
-                    Choose your preferred theme.
+                    Choose between light and dark themes.
                   </p>
                 </div>
                 <SegmentedControl
@@ -313,7 +377,10 @@ export default function SettingsPage() {
               <Separator />
               <div className="flex items-center justify-between">
                 <span className="text-text-secondary">Account type</span>
-                <span className="font-semibold text-text-primary">Standard</span>
+                <span className="inline-flex items-center gap-1.5 font-semibold text-text-primary">
+                  {plan === "PRO" && <Crown className="h-3.5 w-3.5 text-primary" />}
+                  {plan === "PRO" ? "Pro" : "Free"}
+                </span>
               </div>
               <Separator />
               <div className="flex items-center justify-between">

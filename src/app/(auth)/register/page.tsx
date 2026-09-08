@@ -70,7 +70,7 @@ export default function RegisterPage() {
       toast.success("Account created!", {
         description: "Welcome to OmniMarketX. You're all set to trade.",
       });
-      router.push("/home");
+      router.push("/onboarding");
     } catch {
       toast.error("Sign up failed", {
         description: "Something went wrong. Please try again.",
@@ -181,6 +181,11 @@ export default function RegisterPage() {
         <Button type="submit" className="h-11 w-full" loading={isSubmitting}>
           {isSubmitting ? "Creating account…" : "Create Account"}
         </Button>
+
+        <p className="text-center text-xs leading-relaxed text-text-muted">
+  By creating an account, you agree to our Terms of Service and Privacy
+  Policy.
+</p>
       </form>
 
       <div className="mt-5 text-center text-sm text-text-secondary">

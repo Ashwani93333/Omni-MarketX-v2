@@ -143,6 +143,13 @@ export interface WalletStats {
   totalIn: number;
 }
 
+export type NotificationCategory =
+  | "TRADE"
+  | "SOCIAL"
+  | "REWARD"
+  | "ANNOUNCEMENT"
+  | "SYSTEM";
+
 export interface NotificationItem {
   id: string;
   type:
@@ -153,11 +160,33 @@ export interface NotificationItem {
     | "mention"
     | "group"
     | "reward"
+    | "announcement"
     | "system";
   title: string;
   description: string;
   time: string;
   read: boolean;
+  category: NotificationCategory;
+  metadata?: Record<string, unknown>;
+}
+
+export type ConversationType = "MESSAGE" | "STORY_REACTION" | "SYSTEM";
+
+export interface Conversation {
+  id: string;
+  participant: User;
+  lastMessage: string;
+  timestamp: string;
+  unreadCount: number;
+  type?: ConversationType;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  timestamp: string;
 }
 
 export interface SearchResultGroup {

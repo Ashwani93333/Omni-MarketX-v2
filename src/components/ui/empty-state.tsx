@@ -1,4 +1,4 @@
-import { SearchX, Inbox } from "lucide-react";
+import { SearchX, Inbox, type LucideIcon } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ export function EmptyState({
   actionLabel,
   onAction,
   variant = "default",
+  icon,
   className,
 }: {
   title: string;
@@ -17,9 +18,10 @@ export function EmptyState({
   actionLabel?: string;
   onAction?: () => void;
   variant?: "default" | "search";
+  icon?: LucideIcon;
   className?: string;
 }) {
-  const Icon = variant === "search" ? SearchX : Inbox;
+  const Icon = icon ?? (variant === "search" ? SearchX : Inbox);
   return (
     <div
       className={cn(

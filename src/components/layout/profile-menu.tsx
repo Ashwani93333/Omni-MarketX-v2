@@ -4,6 +4,7 @@ import {
   ChartSpline,
   ChevronDown,
   CircleUser,
+  Crown,
   HelpCircle,
   LogOut,
   Settings,
@@ -20,17 +21,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MOCK_CURRENT_USER } from "@/constants";
 import { applyTheme, useAppStore } from "@/store/app-store";
+import { useOnboardingStore } from "@/store/onboarding-store";
+import { useUserStore } from "@/store/user-store";
 import { toast } from "sonner";
 
 function ThemeDropdownItem() {
   const theme = useAppStore((s) => s.theme);
   const setTheme = useAppStore((s) => s.setTheme);
-  const cycles = ["light", "system", "dark"] as const;
+  const cycles = ["light", "dark"] as const;
 
   const cycleTheme = () => {
-    const next = cycles[(cycles.indexOf(theme as never) + 1) % cycles.length];
+    const next = cycles[(cycles.indexOf(theme) + 1) % cycles.length];
     setTheme(next);
     applyTheme(next);
   };
@@ -49,14 +51,18 @@ function ThemeDropdownItem() {
 export function ProfileMenu() {
   const tradingMode = useAppStore((s) => s.tradingMode);
   const setTradingMode = useAppStore((s) => s.setTradingMode);
+  const plan = useOnboardingStore((s) => s.plan);
+  const displayName = useUserStore((s) => s.displayName);
+  const username = useUserStore((s) => s.username);
+  const initials = useUserStore((s) => s.initials);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 rounded-full py-1 pl-1 pr-1.5 transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-          <Avatar size="sm" initials={MOCK_CURRENT_USER.initials} />
+          <Avatar size="sm" initials={initials} />
           <span className="hidden items-center gap-1 text-sm font-semibold text-text-primary lg:flex">
-            {MOCK_CURRENT_USER.username}
+            {username}
             <ChevronDown className="h-3.5 w-3.5 text-text-muted" />
           </span>
         </button>
@@ -64,10 +70,10 @@ export function ProfileMenu() {
       <DropdownMenuContent align="end" className="w-[220px]">
         <DropdownMenuLabel>
           <p className="text-sm text-text-primary">
-            {MOCK_CURRENT_USER.displayName}
+            {displayName}
           </p>
           <p className="text-xs font-normal text-text-muted">
-            @{MOCK_CURRENT_USER.username}
+            @{username}
           </p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -81,6 +87,12 @@ export function ProfileMenu() {
           <Link href="/portfolio">
             <ChartSpline className="h-4 w-4" />
             Portfolio
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/settings#plan">
+            <Crown className="h-4 w-4 text-orange" />
+            {plan === "PRO" ? "Manage Pro" : "Upgrade to Pro"}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
@@ -99,10 +111,7 @@ export function ProfileMenu() {
         {tradingMode === "DEMO" && (
           <>
             <DropdownMenuItem
-              onClick={() => {
-                setTradingMode("REAL");
-                toast.info("Switched to Real mode");
-              }}
+              onClick={() => setTradingMode("REAL")}
             >
               <ChartSpline className="h-4 w-4 text-orange" />
               Exit Demo

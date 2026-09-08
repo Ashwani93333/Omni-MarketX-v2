@@ -5,9 +5,9 @@ import {
   trendingTraders,
 } from "@/mocks/leaderboard";
 import { groups, myGroups, popularGroups } from "@/mocks/groups";
+import { notifications } from "@/mocks/notifications";
 import {
   comments,
-  notifications,
   posts,
   socialUsers,
   stories,

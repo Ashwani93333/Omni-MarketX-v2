@@ -1,4 +1,4 @@
-import type { Comment, NotificationItem, Post, User } from "@/types";
+import type { Comment, Post, User } from "@/types";
 
 export const socialUsers: User[] = [
   {
@@ -285,53 +285,3 @@ export const stories = [
   },
 ];
 
-export const notifications: NotificationItem[] = [
-  {
-    id: "n-001",
-    type: "trade",
-    title: "Trade executed",
-    description: "Your YES order on Bitcoin $75K filled at 0.41.",
-    time: "2m ago",
-    read: false,
-  },
-  {
-    id: "n-002",
-    type: "comment",
-    title: "New comment",
-    description: "Kaden Sterling commented on your post.",
-    time: "18m ago",
-    read: false,
-  },
-  {
-    id: "n-003",
-    type: "follow",
-    title: "New follower",
-    description: "Nova Hodl started following you.",
-    time: "1h ago",
-    read: false,
-  },
-  {
-    id: "n-004",
-    type: "market",
-    title: "Market resolved",
-    description: "Space station launch module resolved NO.",
-    time: "3h ago",
-    read: true,
-  },
-  {
-    id: "n-005",
-    type: "reward",
-    title: "Reward earned",
-    description: "You earned +25 USDC referral reward.",
-    time: "5h ago",
-    read: true,
-  },
-  {
-    id: "n-006",
-    type: "group",
-    title: "Group invite",
-    description: "You were invited to Crypto Traders Daily.",
-    time: "8h ago",
-    read: true,
-  },
-];

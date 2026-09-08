@@ -55,7 +55,7 @@ export function StatCard({
           <p className="text-sm font-medium text-text-secondary">{label}</p>
           <p
             className={cn(
-              "number-tight mt-1 text-2xl font-bold tracking-tight text-text-primary",
+              "number-tight mt-1 text-2xl font-bold tracking-tight text-text-primary [overflow-wrap:anywhere]",
               valueClassName
             )}
           >

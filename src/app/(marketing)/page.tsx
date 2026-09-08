@@ -31,7 +31,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-import { Logo } from "@/components/layout/logo";
+import { MarketingFooter } from "@/components/marketing/marketing-footer";
+import { MarketingNav } from "@/components/marketing/marketing-nav";
 import { CATEGORIES } from "@/constants";
 
 const categoryMeta: Record<
@@ -202,43 +203,7 @@ const featureGroups = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Logo />
-          <nav className="hidden items-center gap-1 md:flex">
-            {[
-              { label: "Markets", href: "/markets" },
-              { label: "Trending", href: "/trending" },
-              { label: "Features", href: "#features" },
-              { label: "Categories", href: "#categories" },
-              { label: "How it works", href: "#how-it-works" },
-            ].map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface hover:text-text-primary"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/login"
-              className="hidden rounded-lg px-3 py-2 text-sm font-semibold text-text-secondary transition-colors hover:text-text-primary sm:block"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/home"
-              className="inline-flex h-9 items-center gap-1.5 rounded-[10px] bg-primary px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover"
-            >
-              Get started
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </header>
+      <MarketingNav />
 
       <main>
         <section className="mx-auto max-w-6xl px-4 pb-16 pt-16 sm:px-6 sm:pt-24">
@@ -257,7 +222,7 @@ export default function LandingPage() {
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link
-                href="/home"
+                href="/onboarding"
                 className="inline-flex h-12 items-center gap-2 rounded-[12px] bg-primary px-6 text-base font-semibold text-white shadow-md transition-all hover:bg-primary-hover active:scale-[0.98]"
               >
                 Start trading free
@@ -502,7 +467,7 @@ export default function LandingPage() {
                 start trading in seconds — with every feature unlocked.
               </p>
               <Link
-                href="/home"
+                href="/onboarding"
                 className="mt-7 inline-flex h-12 items-center gap-2 rounded-[12px] bg-white px-6 text-base font-bold text-[#d00287] shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 Get started free
@@ -513,14 +478,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-border bg-surface">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row sm:px-6">
-          <Logo />
-          <p className="text-sm text-text-muted">
-            OmniMarketX — a demo prediction-market experience.
-          </p>
-        </div>
-      </footer>
+      <MarketingFooter />
     </div>
   );
 }

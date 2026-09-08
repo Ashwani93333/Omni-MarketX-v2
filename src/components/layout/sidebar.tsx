@@ -1,6 +1,6 @@
 "use client";
 
-import { Medal, Moon, Sun } from "lucide-react";
+import { Crown, Moon, Sparkles, Sun } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -9,6 +9,7 @@ import { navIconByKey } from "@/components/layout/nav-icons";
 import { APP_NAME, NAV_ITEMS } from "@/constants";
 import { cn } from "@/lib/utils";
 import { applyTheme, useAppStore, type Theme } from "@/store/app-store";
+import { useOnboardingStore } from "@/store/onboarding-store";
 
 function NavItem({
   href,
@@ -48,6 +49,40 @@ function NavItem({
   );
 }
 
+function PlanTeaser() {
+  const plan = useOnboardingStore((state) => state.plan);
+  const isPro = plan === "PRO";
+
+  return (
+    <Link
+      href="/settings#plan"
+      className={cn(
+        "flex items-center gap-3 rounded-[12px] border p-3 transition-colors hover:shadow-sm",
+        isPro
+          ? "border-border bg-surface"
+          : "border-primary/30 bg-gradient-to-br from-primary-light/50 to-transparent"
+      )}
+    >
+      <span
+        className={cn(
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px]",
+          isPro ? "bg-gradient-brand text-white" : "bg-primary-light text-primary"
+        )}
+      >
+        {isPro ? <Crown className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-xs font-bold text-text-primary">
+          {isPro ? "Pro is active" : "Upgrade to Pro"}
+        </span>
+        <span className="block truncate text-[11px] text-text-muted">
+          {isPro ? "Manage your plan" : "Advanced tools & analytics"}
+        </span>
+      </span>
+    </Link>
+  );
+}
+
 function ThemeSelector() {
   const theme = useAppStore((s) => s.theme);
   const setTheme = useAppStore((s) => s.setTheme);
@@ -55,7 +90,6 @@ function ThemeSelector() {
   const options: { value: Theme; label: string; icon: React.ReactNode }[] = [
     { value: "light", label: "Light", icon: <Sun className="h-3.5 w-3.5" /> },
     { value: "dark", label: "Dark", icon: <Moon className="h-3.5 w-3.5" /> },
-    { value: "system", label: "System", icon: <Medal className="h-3.5 w-3.5" /> },
   ];
 
   return (
@@ -65,7 +99,7 @@ function ThemeSelector() {
           Theme
         </span>
       </div>
-      <div className="grid grid-cols-3 gap-1">
+      <div className="grid grid-cols-2 gap-1">
         {options.map((opt) => (
           <button
             key={opt.value}
@@ -104,7 +138,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       <nav
         aria-label="Primary"
-        className="scrollbar-thin flex-1 space-y-0.5 overflow-y-auto px-3 pb-3"
+        className="scrollbar-none flex-1 space-y-0.5 overflow-y-auto px-3 pb-3"
       >
         {NAV_ITEMS.map((item) => (
           <NavItem
@@ -129,6 +163,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="space-y-3 border-t border-border-light p-4">
+        <PlanTeaser />
         <ThemeSelector />
         <p className="px-1 text-center text-[11px] text-text-muted">
           {APP_NAME} · Prediction markets

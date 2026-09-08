@@ -5,7 +5,7 @@ import { persist } from "zustand/middleware";
 
 import { toast } from "sonner";
 
-export type Theme = "light" | "dark" | "system";
+export type Theme = "light" | "dark";
 export type TradingMode = "DEMO" | "REAL";
 
 interface AppState {
@@ -22,7 +22,7 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      theme: "system",
+      theme: "light",
       setTheme: (theme) => set({ theme }),
       tradingMode: "DEMO",
       setTradingMode: (tradingMode) => {
@@ -45,6 +45,25 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "omx-app-state",
+      version: 2,
+      migrate: (persistedState) => {
+        const state = persistedState as
+          | { theme?: unknown; tradingMode?: unknown }
+          | undefined;
+        if (!state || typeof state !== "object") return persistedState;
+        const prefersDark =
+          typeof window !== "undefined" &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const theme: Theme =
+          state.theme === "dark" ||
+          (state.theme === "system" && prefersDark)
+            ? "dark"
+            : "light";
+        return {
+          theme,
+          tradingMode: state.tradingMode === "REAL" ? "REAL" : "DEMO",
+        };
+      },
       partialize: (state) => ({
         theme: state.theme,
         tradingMode: state.tradingMode,
@@ -53,20 +72,7 @@ export const useAppStore = create<AppState>()(
   )
 );
 
-function getSystemTheme(): "light" | "dark" {
-  if (typeof window === "undefined") return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
-}
-
-export function resolveTheme(theme: Theme): "light" | "dark" {
-  if (theme === "system") return getSystemTheme();
-  return theme;
-}
-
 export function applyTheme(theme: Theme) {
   if (typeof document === "undefined") return;
-  const resolved = resolveTheme(theme);
-  document.documentElement.classList.toggle("dark", resolved === "dark");
+  document.documentElement.classList.toggle("dark", theme === "dark");
 }

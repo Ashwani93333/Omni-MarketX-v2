@@ -47,7 +47,7 @@ export default function PortfolioPage() {
           description="Track your positions and overall performance."
         />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
           <StatCard
             icon={<Briefcase className="h-5 w-5" />}
             label="Total Value"
@@ -124,12 +124,12 @@ export default function PortfolioPage() {
                 {trades.slice(0, 6).map((trade) => (
                   <li
                     key={trade.id}
-                    className="rounded-[10px] px-2 py-2 transition-colors hover:bg-background"
+                    className="rounded-[10px] border border-border bg-background px-3 py-2.5 transition-colors hover:border-border"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
                       <span
                         className={cn(
-                          "inline-flex rounded-md px-1.5 py-0.5 text-[10px] font-bold",
+                          "shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold",
                           trade.side === "YES"
                             ? "bg-success-light text-success"
                             : "bg-danger-light text-danger"
@@ -137,12 +137,19 @@ export default function PortfolioPage() {
                       >
                         {trade.side}
                       </span>
-                      <span className="number-tight text-xs font-semibold text-text-primary">
+                      <span className="min-w-0 flex-1 truncate text-xs text-text-secondary">
+                        {trade.market}
+                      </span>
+                      <span className="number-tight shrink-0 rounded-md bg-surface px-1.5 py-0.5 text-xs font-bold text-text-primary">
                         {formatCurrency(trade.amount)}
                       </span>
                     </div>
-                    <p className="mt-1 line-clamp-1 text-xs text-text-secondary">{trade.market}</p>
-                    <p className="mt-0.5 text-[11px] text-text-muted">{formatDate(trade.date)}</p>
+                    <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-text-muted">
+                      <span className="truncate">{formatDate(trade.date)}</span>
+                      <span className="number-tight shrink-0">
+                        {trade.shares.toLocaleString()} shares
+                      </span>
+                    </div>
                   </li>
                 ))}
               </ul>

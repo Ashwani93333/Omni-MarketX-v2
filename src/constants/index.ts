@@ -11,6 +11,7 @@ export const NAV_ITEMS = [
   { label: "Activity", href: "/activity", icon: "Activity" },
   { label: "Leaderboard", href: "/leaderboard", icon: "Trophy" },
   { label: "Social", href: "/social", icon: "Users" },
+  { label: "Messages", href: "/messages", icon: "MessagesSquare" },
   { label: "Groups", href: "/groups", icon: "UsersRound" },
   { label: "Portfolio", href: "/portfolio", icon: "Briefcase" },
   { label: "Watchlist", href: "/watchlist", icon: "Star" },

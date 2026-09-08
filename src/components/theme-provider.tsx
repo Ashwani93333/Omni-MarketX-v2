@@ -9,12 +9,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     applyTheme(theme);
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = () => {
-      if (useAppStore.getState().theme === "system") applyTheme("system");
-    };
-    media.addEventListener("change", handler);
-    return () => media.removeEventListener("change", handler);
   }, [theme]);
 
   return <>{children}</>;

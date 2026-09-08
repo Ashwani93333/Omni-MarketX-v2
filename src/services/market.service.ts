@@ -94,9 +94,15 @@ export const marketService = {
   },
 
   async searchMarkets(query: string): Promise<Market[]> {
+    const q = query.toLowerCase();
     return mockRequest(
       markets
-        .filter((m) => m.title.toLowerCase().includes(query.toLowerCase()))
+        .filter(
+          (m) =>
+            m.title.toLowerCase().includes(q) ||
+            m.category.toLowerCase().includes(q) ||
+            (m.description ?? "").toLowerCase().includes(q)
+        )
         .slice(0, 5),
       200
     );

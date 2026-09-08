@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Avatar } from "@/components/ui/avatar";
 import { SearchInput } from "@/components/ui/search-input";
+import { CATEGORIES } from "@/constants";
 import { groups } from "@/mocks/groups";
 import { searchUsers } from "@/mocks/social";
 import { marketService } from "@/services/market.service";
@@ -82,8 +83,17 @@ export function GlobalSearch() {
         .slice(0, 3)
     : [];
 
+  const matchedCategories = query.trim()
+    ? CATEGORIES.filter((c) =>
+        c.toLowerCase().includes(query.toLowerCase())
+      )
+    : [];
+
   const hasResults =
-    results.length > 0 || matchedUsers.length > 0 || matchedGroups.length > 0;
+    results.length > 0 ||
+    matchedCategories.length > 0 ||
+    matchedUsers.length > 0 ||
+    matchedGroups.length > 0;
 
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
@@ -159,7 +169,20 @@ export function GlobalSearch() {
                         key={m.id}
                         href={`/markets/${m.id}`}
                         title={m.title}
-                        sub={`${m.category} · ${m.probability}% YES`}
+                        sub={`${m.category} · ${m.probability}% YES${m.status !== "OPEN" ? ` · ${m.status}` : ""}`}
+                        onSelect={() => setOpen(false)}
+                      />
+                    ))}
+                  </SearchSection>
+                )}
+                {matchedCategories.length > 0 && (
+                  <SearchSection label="Events">
+                    {matchedCategories.map((c) => (
+                      <SearchRow
+                        key={c}
+                        href={`/markets?category=${encodeURIComponent(c)}`}
+                        title={`${c} events`}
+                        sub={`Browse all ${c} markets`}
                         onSelect={() => setOpen(false)}
                       />
                     ))}

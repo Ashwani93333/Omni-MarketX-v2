@@ -24,11 +24,11 @@ import { ErrorState } from "@/components/ui/error-state";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MOCK_CURRENT_USER } from "@/constants";
 import { cn } from "@/lib/utils";
 import { marketService } from "@/services/market.service";
 import { socialService } from "@/services/domain.service";
 import { useFollowStore } from "@/store/follow-store";
+import { useUserStore } from "@/store/user-store";
 import { useWatchlistStore } from "@/store/watchlist-store";
 import type { Post, User } from "@/types";
 
@@ -42,6 +42,8 @@ export default function SocialPage() {
   const [activeTab, setActiveTab] = useState<string>("For You");
   const [attachImage, setAttachImage] = useState(false);
   const [attachPoll, setAttachPoll] = useState(false);
+  const initials = useUserStore((s) => s.initials);
+  const displayName = useUserStore((s) => s.displayName);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<[string, string]>(["", ""]);
@@ -146,11 +148,11 @@ export default function SocialPage() {
 
         <div className="rounded-[16px] border border-border bg-surface p-4">
           <div className="flex items-start gap-3">
-            <Avatar
-              size="md"
-              initials={MOCK_CURRENT_USER.initials}
-              alt={MOCK_CURRENT_USER.displayName}
-            />
+<Avatar
+                size="md"
+                initials={initials}
+                alt={displayName}
+              />
             <div className="min-w-0 flex-1 space-y-3">
               <textarea
                 value={draft}

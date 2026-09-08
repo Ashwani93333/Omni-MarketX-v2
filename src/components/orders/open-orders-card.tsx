@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { formatRelativeTime } from "@/lib/format";
+import { formatCurrency, formatRelativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useOrdersStore } from "@/store/orders-store";
 
@@ -48,10 +48,10 @@ export function OpenOrdersCard() {
                 key={order.id}
                 className="rounded-[10px] border border-border bg-background px-3 py-2.5"
               >
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
                   <span
                     className={cn(
-                      "inline-flex rounded-md px-1.5 py-0.5 text-[10px] font-bold",
+                      "shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold",
                       order.side === "YES"
                         ? "bg-success-light text-success"
                         : "bg-danger-light text-danger"
@@ -59,13 +59,16 @@ export function OpenOrdersCard() {
                   >
                     {order.side}
                   </span>
-                  <span className="number-tight text-[11px] text-text-muted">
-                    {order.type} · {formatRelativeTime(order.placedAt)}
+                  <span className="shrink-0 whitespace-nowrap text-[11px] text-text-muted">
+                    {order.type}
+                  </span>
+                  <span className="ml-auto shrink-0 whitespace-nowrap text-[11px] text-text-muted">
+                    {formatRelativeTime(order.placedAt)}
                   </span>
                   <button
                     onClick={() => handleCancel(order.id)}
                     aria-label="Cancel order"
-                    className="ml-auto rounded-md p-1 text-text-muted transition-colors hover:bg-surface hover:text-danger"
+                    className="shrink-0 rounded-md p-1 text-text-muted transition-colors hover:bg-surface hover:text-danger"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -76,10 +79,16 @@ export function OpenOrdersCard() {
                 >
                   {order.marketTitle}
                 </Link>
-                <p className="mt-1 text-[11px] text-text-muted">
-                  @ <span className="number-tight">{order.price.toFixed(3)}</span>{" "}
-                  · <span className="number-tight">{order.shares} shares</span>
-                </p>
+                <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-text-muted">
+                  <span className="truncate">
+                    @ <span className="number-tight">{order.price.toFixed(3)}</span>
+                    {" · "}
+                    <span className="number-tight">{order.shares} shares</span>
+                  </span>
+                  <span className="number-tight shrink-0 rounded-md bg-surface px-1.5 py-0.5 font-bold text-text-primary">
+                    {formatCurrency(order.shares * order.price)}
+                  </span>
+                </div>
               </li>
             ))}
           </ul>

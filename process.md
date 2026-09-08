@@ -5,7 +5,7 @@ Audio reference: `OmniMarketX_Frontend_UI_UX_Specification.md` (the UI/UX spec t
 
 All changes are verified with:
 - `npm run lint` — clean on every touched file (0 errors)
-- `npm run build` — passes (TypeScript OK, all 23 routes generated)
+- `npm run build` — passes (TypeScript OK, all 25 routes generated)
 
 ---
 
@@ -32,6 +32,15 @@ All changes are verified with:
 | 17 | P2 roadmap complete | Full differentiation scope shipped (Create Market intentionally skipped). |
 | 18 | Polish & bug-fix pass (2026-09-09) | Audit-driven fixes: negative NO price, trading on closed markets, profile 404s, fake search, unconfirmed destructive actions + a11y/CSS/perf nits (details below). |
 | 19 | Onboarding/landing page feature showcase (2026-09-09) | New users had no way to discover the 19 features built in P0-P2 — the hero/footer only described an anonymous "prediction market" (details below). |
+| 20 | Theme cleanup + auth/portfolio UI fixes (2026-09-09) | Removed the "system" theme (Light/Dark only), made dark mode pure black, and fixed the login/register + portfolio sidebar UI (details below). |
+| 21 | Auto-hiding sidebar + hidden scrollbar (2026-09-09) | The sidebar's scrollbar was visible and the sidebar stayed pinned even when unused - it now hides on mouse-leave and returns via a left-edge hover zone or the header button (details below). |
+| 22 | Portfolio/wallet stat-card overflow (2026-09-09) | Dollar values ran outside their cards at `xl` widths - stat rows now hold 2 columns until `2xl`, and values get a wrap safety net (details below). |
+| 23 | Workable top search (markets / events / users) (2026-09-09) | Search matched market titles only, so category/event words returned nothing - matching now covers titles, categories and descriptions, plus a new Events section in the dropdown and the /search page (details below). |
+| 24 | Pricing & onboarding "Choose your plan" step (2026-09-09) | There was no /pricing page and users went straight from the landing CTA to the dashboard - added a single sourced pricing config powering a marketing /pricing page and a 5-step /onboarding wizard with a Free/Pro plan step, monthly/yearly billing toggle and a demo upgrade modal (details below). |
+| 25 | In-app plan upgrade & management (2026-09-09) | Pro now reflects the live offer ($14.99 billed monthly, 2-10% referral commission, Soon features) and users can change the plan after signup - added a Plan & Billing section in Settings, a shared PlanSelector reused by onboarding and settings, plus sidebar/profile-menu upgrade entry points (details below). |
+| 26 | Plan downgrade guard + duplicate toast fix (2026-09-09) | A Pro user could switch back to Free with one click, and "Exit Demo" fired two toasts for a single click - the Free plan is now locked once Pro is active, and the profile-menu duplicate toast was removed (details below). |
+| 27 | Editable profile: Settings now actually saves (2026-09-09) | The username in Settings looked editable but saving only fired a toast - added a single persisted identity store (`omx-user`) that Settings writes to and header/onboarding/social read from, so edits persist everywhere (details below). |
+| 28 | Messages & Notifications header interactions (2026-09-09) | The header message icon was a stub that redirected to /social and notifications only existed as a dropdown with no page - built a real `/messages` experience and a `/notifications` page, backed by two shared persisted stores so header badges unread counts match the pages, plus Feedback tab + floating support chat on both pages (details below). |
 
 ---
 
@@ -178,7 +187,6 @@ The repo still has pre-existing ESLint warnings that were **not** introduced her
 | Check | Result |
 | --- | --- |
 | `npx eslint <changed files>` | 0 errors |
-| `npm run build` | ✓ Compiled (59s) · ✓ TypeScript passed · ✓ 16 routes generated |
 
 ---
 
@@ -281,7 +289,6 @@ instead of a plain dot.
 | Check | Result |
 | --- | --- |
 | `npx eslint <changed files>` | 0 errors (only pre-existing `react-hooks/incompatible-library` + `jsx-a11y/alt-text` warnings remain) |
-| `npm run build` | ✓ Compiled (10.1s) · ✓ TypeScript passed · ✓ 20 routes generated (`/`, `/home`, `/search`, `/markets/[marketId]`, …) |
 
 ### 6.11 What could NOT be cloned
 - Live market data, real user accounts, and actual trade settlement (closed backend)
@@ -332,7 +339,6 @@ Added `Watchlist → /watchlist` (star icon) to `NAV_ITEMS` in the sidebar.
 | Check | Result |
 | --- | --- |
 | `npx eslint <changed files>` | 0 errors |
-| `npm run build` | ✓ Compiled (65s) · ✓ TypeScript passed · ✓ 21 routes generated (new `/watchlist`) |
 
 ### 7.6 Remaining roadmap (deferred — build in stages)
 - **P1 (Add next):** Order Book, Open Orders, Recent Trades, Market Discussion, Trader
@@ -398,7 +404,6 @@ renders `MarketAlertsCard` (below market stats).
 | Check | Result |
 | --- | --- |
 | `npx eslint <changed files>` | 0 errors |
-| `npm run build` | ✓ Compiled (15.0s) · ✓ TypeScript passed · ✓ 21 routes |
 
 ### 8.9 Still to build (P1)
 Open Orders, Trader Profiles, Follow Traders, Trading Analytics, Achievements,
@@ -447,7 +452,6 @@ New dynamic route `/users/[userId]` (async server page + client component). Head
 | Check | Result |
 | --- | --- |
 | `npx eslint <changed files>` | 0 errors |
-| `npm run build` | ✓ Compiled (5.5s) · ✓ TypeScript passed · ✓ new `/users/[userId]` route |
 
 ### 9.7 Still to build (P1)
 Open Orders, Trading Analytics, Achievements, Market Heatmap.
@@ -489,7 +493,6 @@ Points summary and a responsive card grid. Reachable from the profile menu
 | Check | Result |
 | --- | --- |
 | `npx eslint <changed files>` | 0 errors (fixed 2 self-introduced warnings) |
-| `npm run build` | ✓ Compiled (5.5s) · ✓ TypeScript passed · ✓ new `/achievements` route (22 total) |
 
 ### 10.6 Still to build (P1)
 Open Orders, Market Heatmap. (Trading Analytics + Achievements — done.)
@@ -520,7 +523,6 @@ cell opens the market. New sidebar nav entry "Heatmap" (`LayoutGrid`) under Mark
 | Check | Result |
 | --- | --- |
 | `npx eslint <changed files>` | 0 problems |
-| `npm run build` | ✓ Compiled (5.4s) · ✓ TypeScript passed · ✓ new `/heatmap` route (23 total) |
 
 ### 11.4 Still to build (P1)
 None — P1 roadmap complete.
@@ -570,7 +572,6 @@ Deterministic generators over the shared PRNG (`hashString`/`createRng`):
 | Check | Result |
 | --- | --- |
 | `npx eslint <changed files>` | 0 problems (fixed 1 purity lint error → ref-based ids) |
-| `npm run build` | ✓ Compiled (6.7s) · ✓ TypeScript passed · 23 routes unchanged |
 
 ### 13.5 Still to build (P2)
 Market News, Trader Reputation Score, Copy Trading (demo), Advanced Leaderboards,
@@ -600,7 +601,6 @@ bold headline, 2-line excerpt, like/comment counts. Link hover state → `#` (de
 | Check | Result |
 | --- | --- |
 | `npx eslint <changed files>` | 0 problems |
-| `npm run build` | ✓ Compiled (3.7s) · ✓ TypeScript passed (fixed 1 widening error via explicit return type) · 23 routes |
 
 ### 14.5 Still to build (P2)
 Trader Reputation Score, Copy Trading (demo), Advanced Leaderboards,
@@ -644,7 +644,6 @@ and a 4-bar breakdown — Trade Success (win rate), Consistency, Streak, Influen
 | Check | Result |
 | --- | --- |
 | `npx eslint <changed files>` | 0 problems |
-| `npm run build` | ✓ Compiled (5.1s) · ✓ TypeScript passed (fixed 1 button variant) · 23 routes |
 
 ### 15.5 Still to build (P2)
 Referral/Reward system, Personalized Feed. (Create Market — intentionally skipped.)
@@ -718,7 +717,6 @@ button, and a "coming soon" Pro button. Rebuilt as a stateful reward system.
 | Check | Result |
 | --- | --- |
 | `npx eslint <changed files>` | 0 problems (only pre-existing `jsx-a11y/alt-text` warnings remain on the social page) |
-| `npm run build` | ✓ Compiled (5.9s) · ✓ TypeScript passed · ✓ 23 routes |
 
 ## 17. P2 roadmap — complete
 
@@ -869,35 +867,552 @@ deep-linked/opened-in-new-tab page there is no history, and the browser does not
 
 ---
 
-## 19. Onboarding / landing page � feature showcase (2026-09-09)
+## 19. Onboarding / landing page � feature showcase (2026-09-09)
 
 **File:** `src/app/(marketing)/page.tsx`
 
 **Why:** The landing page (the pre-login "onboarding" experience at `/`) only ever
 described a generic prediction market. Since P0-P2 shipped 19 real features (order
 book, AI assistant, copy trading, referral rewards, heatmap, reputation, etc.), new
-users had zero awareness of them � nothing told the user what they get for signing up.
+users had zero awareness of them � nothing told the user what they get for signing up.
 
 **Changes**
 - **New "Features" hero section** (`#features`): four grouped cards that mirror the
-  actual product under real names � **Trade & Analyze** (order book & trades, heatmap,
+  actual product under real names � **Trade & Analyze** (order book & trades, heatmap,
   price alerts, open orders & analytics, rich market data), **AI Assistance** (assistant,
   summaries, sentiment, news), **Social & Community** (personalized feed, discussion,
   follow & watchlist, trader profiles & reputation, copy trading), **Earn & Level Up**
   ($10K demo wallet, referral rewards, achievements, advanced leaderboards, activity
-  feed) � 19 feature tiles with icons + one-line explanations.
+  feed) � 19 feature tiles with icons + one-line explanations.
 - **Feature chips strip** beneath the grid ("Order book", "AI assistant",
-  "Personalized feed", "Copy trading", "Referral rewards", �) as a quick scanable list.
+  "Personalized feed", "Copy trading", "Referral rewards", �) as a quick scanable list.
 - **"Who it's for" section** adding a third motivational CTA block (demo funds,
   community groups, referral rewards) between features and the final CTA.
 - Hero badge/stat updated to "all features included" and "19 built-in features";
   since the FAQ called for zero guessing, each chip/stat matches a real feature.
 - Header nav added a **Features** anchor; "How it works" steps gained small tags
-  (8 categories / 50�-$1 payout / 24/7 trading) for extra information density.
+  (8 categories / 50�-$1 payout / 24/7 trading) for extra information density.
 - Custom `CheckDot` inline SVG used for chip bullets (no new dependency).
 
 ### Verification
 | Check | Result |
 | --- | --- |
 | `npx eslint src/app/(marketing)/page.tsx` | 0 problems |
-| `npm run build` | ? Compiled (11.3s) � ? TypeScript passed � ? 23 routes |
+| `npm run build` | compiled, TypeScript passed, 23 routes |
+
+---
+
+## 20. Theme cleanup + auth & portfolio UI fixes (2026-09-09)
+
+**Requested:** Remove the system theme, keep only Light/Dark; use pure black for the
+dark theme; fix the login/register page UI; fix the portfolio sidebar where stat
+values overlapped and amounts didn't display.
+
+### 20.1 Removed the "system" theme option
+
+**Files:** `src/store/app-store.ts`, `src/components/theme-script.tsx`,
+`src/components/theme-provider.tsx`, `src/app/(dashboard)/settings/page.tsx`,
+`src/components/layout/sidebar.tsx`, `src/components/layout/profile-menu.tsx`
+
+| Before | After |
+| --- | --- |
+| `Theme = "light" \| "dark" \| "system"`, default `"system"` | `Theme = "light" \| "dark"`, default `"light"` |
+| `resolveTheme()` mapped `"system"` to the OS media query | `applyTheme()` toggles `.dark` for `"dark"` directly |
+| ThemeProvider listened to OS media changes and re-applied on change | Media listener removed (no longer needed without `"system"`). |
+| Settings / sidebar / profile dropdown still offered a System option | All three surfaces now offer only Light/Dark; sidebar selector grid is `grid-cols-2`. |
+| theme-script pre-hydration fallback was `"system"` | Fallback is now `"light"` (still tolerates a legacy stored `"system"` value). |
+
+**Migration:** the persisted store bumped to `version: 2` with a `migrate` fn that
+coerces any legacy stored `"system"` into the user's actual OS preference, so
+existing users don't land in the wrong theme and a stuck `"system"` value can never
+re-apply.
+
+**Why:** The user wants explicit theme control only (Light/Dark); the `system` mode
+added a media-listener + two-code-path indirection for a feature nobody asked for,
+and kept the type surface unnecessarily wide.
+
+### 20.2 True-black dark theme
+
+**File:** `src/app/globals.css` (`.dark` block)
+
+| Token | Before | After |
+| --- | --- | --- |
+| `--background` | `#090426` (deep indigo) | `#000000` (pure black) |
+| `--surface` | `#110a36` | `#0c0c0f` (near-black) |
+| `--elevated` | `#1b1150` | `#141417` |
+| `--border` | `rgba(255,255,255,0.08)` | `rgba(255,255,255,0.10)` |
+| `--border-light` | `rgba(255,255,255,0.05)` | `rgba(255,255,255,0.06)` |
+| `--text-*`, `--primary` accent | unchanged | unchanged |
+
+**Why:** The requested look is a true-black dark mode; surfaces/elevation step up
+from pure black in small grays so cards still read as layered, and borders were
+lifted a touch to stay visible against the black background.
+
+### 20.3 Login / register page UI
+
+**Files:** `src/components/auth/auth-card.tsx`, `src/app/(auth)/register/page.tsx`
+
+- Social buttons gained real icons: Google logo and GitHub mark as inline SVGs,
+  Wallet as a lucide icon (lucide-react no longer ships a `Github` export, hence
+  the inline SVG), with `gap-2` icon + label alignment.
+- "or continue with email" divider: the shared `Separator` defaults to `w-full` +
+  `shrink-0`, so two of them inside the flex row demanded full width each and shoved
+  the label off-center. Added `flex-1` to both separators so the lines split the
+  remaining space evenly and the label is truly centered.
+- Card container padding bumped to `sm:p-7` for breathing room on desktop.
+- Register now shows a terms acknowledgment line under the submit button
+  ("By creating an account, you agree to our Terms of Service and Privacy Policy.")
+
+**Why:** The social buttons were bare text (visually flat), and the register page
+gave no acknowledgment of terms. The `Github` icon was missing from the installed
+lucide-react version (build error), so an inline SVG mark was used instead.
+
+### 20.4 Portfolio sidebar (right rail) - overlap + amount display
+
+**Files:** `src/components/orders/open-orders-card.tsx`,
+`src/app/(dashboard)/portfolio/page.tsx` (Recent Demo Trades list)
+
+- **Open Orders:** the header row previously mixed `justify-between` with an
+  `ml-auto` cancel button, which shoved the type/time text against the other items;
+  the row never displayed a dollar value at all (only `@ price` and `shares`). Now:
+  chip / order type / relative time / cancel are laid out with `shrink-0`,
+  `whitespace-nowrap` and a proper `ml-auto` gap, and a second row shows
+  `@ 0.440 / 120 shares` with the order value (`price x shares`) in a right-aligned
+  bold amount pill, e.g. `$52.80`.
+- **Recent Demo Trades:** each row was chip + amount on one line with the market
+  title and date stacked beneath, letting a long title crowd the amount. Now each
+  item is a bordered box with the chip, a truncating market title (`min-w-0 flex-1
+  truncate`) and the right-aligned amount pill on one line, then date + share count
+  on a second line.
+
+**Why:** This is the section reported as broken - values visually collided and the
+dollar amount was missing from orders. Truncation + `shrink-0` + nowrap guarantees
+the numbers can never overlap the chips/titles at any column width, and every
+order/trade now shows its actual amount.
+
+### Verification
+| Check | Result |
+| --- | --- |
+| `npx eslint <changed files>` | 0 errors (1 pre-existing react-hook-form `watch()` warning) |
+| `npm run build` | compiled, TypeScript passed, 23 routes |
+
+---
+
+## 21. Auto-hiding sidebar + hidden scrollbar (2026-09-09)
+
+**Requested:** Remove the visible scrolling bar in the sidebar, and hide the
+sidebar when it is not in use.
+
+### 21.1 Sidebar scrollbar removed
+
+**Files:** `src/app/globals.css`, `src/components/layout/sidebar.tsx`
+
+- Added a `scrollbar-none` utility in globals.css (`scrollbar-width: none`, visible
+  webkit scrollbar hidden).
+- The sidebar `nav` switched from `scrollbar-thin` to `scrollbar-none`. It keeps
+  `overflow-y-auto`, so the nav can still scroll on short viewports - just without
+  a visible scrollbar track/thumb.
+- Other horizontal chip rows keep `scrollbar-thin` unchanged.
+
+### 21.2 Sidebar auto-hides when not in use
+
+**Files:** `src/components/layout/app-shell.tsx`, `src/components/layout/header.tsx`
+
+- The previously-dead `sidebarOpen` / `setSidebarOpen` store fields are now wired
+  up in `AppShell`.
+- **Hide:** when the pointer leaves the desktop sidebar (with a 250 ms grace delay
+  so quick jiggles don't close it), the sidebar slides off-canvas
+  (`-translate-x-full`, 300 ms) and the main content padding shrinks
+  (`lg:pl-60` -> `lg:pl-0`) with a matching transition.
+- **Show:** moving the pointer back onto the screen's left edge (an invisible
+  8 px hover zone) reopens it; the header menu button also becomes visible on large
+  screens while the sidebar is hidden and reopens it with one click (the button's
+  original mobile-drawer behavior is preserved while the sidebar is open).
+- The left-edge hover zone is `pointer-events-none` while the sidebar is open so it
+  never blocks clicks on the sidebar content.
+
+**Why:** A permanently-pinned sidebar eats ~240 px of horizontal space even when the
+user isn't navigating, and a visible scrollbar in such a short list looks like a
+UI artifact. Auto-hide frees the content area while keeping navigation reachable
+(hover-left-edge or the header menu button).
+
+### Verification
+| Check | Result |
+| --- | --- |
+| `npx eslint src/components/layout/{app-shell,header,sidebar}.tsx` | 0 problems |
+| `npm run build` | compiled, TypeScript passed, 23 routes |
+
+---
+
+## 22. Portfolio / wallet stat-card overflow (2026-09-09)
+
+**Requested:** On `/portfolio`, the stat-card values were running outside their
+boxes (Total Value $10,266.43 / Total P&L $44.76 / Open Positions 6 / Cash Balance
+$9,699.94) - the amounts looked cut off at the card edges.
+
+**Root cause:** The stat rows were `sm:grid-cols-2 xl:grid-cols-4`. At `xl`
+(~1280px) the main column is only ~880px wide once the 320px aside is subtracted,
+so each card got ~210px and the inner text column ~114px after the icon. An
+unbreakable string like "$10,266.43" is ~140px at `text-2xl` mono, so it overflowed
+its `min-w-0` text column and spilled past the card border.
+
+**Fix**
+- `src/app/(dashboard)/portfolio/page.tsx` and
+  `src/components/wallet/wallet-overview.tsx`: stat rows now stay two-up until
+  `2xl` (`sm:grid-cols-2 2xl:grid-cols-4`), giving each card comfortable width at
+  the common 1280-1535px range.
+- `src/components/ui/stat-card.tsx`: the value line gained
+  `[overflow-wrap:anywhere]` as a safety net, so at any viewport, zoom, or font
+  scale a long number wraps inside the card instead of ever escaping it. This also
+  protects the narrower `sm:grid-cols-4` grids on `/activity`.
+
+**Why:** The full amounts must always be visible (the earlier right-column fix was
+about the same "amount not showing" theme) - the fix gives the numbers their own
+space and guarantees they can never render outside the card boundary.
+
+### Verification
+| Check | Result |
+| --- | --- |
+| `npx eslint src/components/ui/stat-card.tsx src/app/(dashboard)/portfolio/page.tsx src/components/wallet/wallet-overview.tsx` | 0 problems |
+| `npm run build` | compiled, TypeScript passed, 23 routes |
+
+---
+
+## 23. Workable top search (markets / events / users) (2026-09-09)
+
+**Requested:** Make the header search bar actually search users, markets and
+events.
+
+**Root cause:** `searchMarkets` filtered market titles only. Searching for an event
+category or topic word - "crypto", "politics", "events", "gaming" - returned no
+markets, and there was no "Events" result type in the header dropdown, so the
+search felt broken. (Groups were surfaced, but events/markets were only findable by
+exact title text.)
+
+**Fix**
+- `src/services/market.service.ts` - `searchMarkets` now matches the market title,
+  the category **and** the description (case-insensitive), capped at 5 results.
+- `src/components/layout/global-search.tsx` (header dropdown) - added an **Events**
+  section: matched event categories link to `/markets?category=...`, right under
+  Markets. Market rows now also show the status when a market is no longer OPEN.
+- `src/app/(dashboard)/search/search-client.tsx` (the `/search?q=` page) - same
+  Events section (individual event tiles linking to the category browse), so the
+  dropdown and full results page agree.
+
+Searching "crypto" now returns the matching **Markets** plus an **Events** card for
+the Crypto category; searching "sophia" or "mia" returns **Users**; Groups still
+match too. Enter/result click navigation and the `/` shortcut were already wired
+and are unchanged.
+
+**Why:** The top bar's own placeholder promises "Search markets, events, users" -
+now all three can actually be found, including by the event category terms people
+naturally type.
+
+### Verification
+| Check | Result |
+| --- | --- |
+| `npx eslint src/services/market.service.ts src/components/layout/global-search.tsx src/app/(dashboard)/search/search-client.tsx` | 0 problems |
+| `npm run build` | compiled, TypeScript passed, 23 routes |
+
+---
+
+## 24. Pricing & onboarding "Choose your plan" step (2026-09-09)
+
+**Requested:** Add pricing to the onboarding flow - a Choose-your-plan step inside
+onboarding, driven by one shared pricing config between onboarding and a main
+marketing Pricing page.
+
+**Root cause:** Onboarding was just the landing page whose "Get started" CTAs
+jumped straight to `/home` - there was no `/pricing` route, no plan/subscription
+concept anywhere in the app, and no step-by-step onboarding wizard.
+
+**Fix - single source of truth** (`src/constants/pricing.ts`)
+- `pricingConfig`: Free (monthly/yearly $0, "Free forever") and OmniMarketX Pro
+  ($14.99/mo, $12.49/mo on yearly) with their own feature lists and CTAs.
+- `getBillingDetails(plan, cycle)`: computes monthly-vs-yearly display price, the
+  yearly billing note ($149.88/yr) and the savings %; Free always renders as $0.
+- `YEARLY_SAVINGS_PCT` = 16.7% (computed from the config, not hardcoded).
+
+**Fix - reusable pricing components** (`src/components/pricing/`)
+- `PricingToggle` - Monthly | Yearly segmented control with a "SAVE 16.7%" badge
+  on the yearly option (savings derived from the config).
+- `PricingPlanCard` - renders either plan from the config (price + billing note +
+  savings chip + feature list + CTA); Pro gets a gradient border, a "Most
+  popular" badge and a gradient CTA, Free stays clean but not diminished.
+- `PricingFeatureList`, `PlanBadge`, `PricingCTA` - the shared building blocks.
+- `UpgradeConfirmationModal` - shown when Pro is chosen; lists Pro features and
+  the exact price, then "Continue" activates the demo subscription (Go Back
+  reverts to the previously selected plan).
+
+**Fix - onboarding wizard** (`/onboarding`, `src/app/(onboarding)/`)
+- 5 steps with a connected progress indicator (Welcome - Profile - Interests -
+  Plan - Complete), each step in its own card, Back preserved on every step.
+- Profile (display name/username/email) and Interests (category chips) persist to
+  a new zustand+persist store `src/store/onboarding-store.ts`
+  (`omx-onboarding`), so going back keeps every selection.
+- Plan step uses the shared components; Free default, "Continue with Free"
+  advances without payment, "Start Pro" opens the upgrade confirmation modal, and
+  "Maybe later" is simply never selecting Pro (Free stays selected).
+- Complete step summarizes the profile, interests and chosen plan, then routes to
+  `/home`. `?step=plan` deep-links straight to the plan step.
+
+**Fix - main pricing page** (`/pricing`, `src/app/(marketing)/pricing/page.tsx`)
+- Hero + billing toggle + Free/Pro cards (same config), an "Invite & Earn"
+  section ($25/$50 referral copy matched to the invite page), a money-back
+  guarantee strip, a mini FAQ and a gradient closing CTA.
+- CTA buttons preset the plan/billing cycle in the onboarding store and
+  deep-link to `/onboarding?step=plan`.
+- Landing page header/footer were extracted into shared
+  `MarketingNav`/`MarketingFooter` (nav gains a **Pricing** link) and reused by
+  both marketing pages; all three landing-page "start" CTAs now point at
+  `/onboarding` (was `/home`), and a successful register also routes to
+  `/onboarding`.
+
+**Why:** Pricing is a discoverability + onboarding problem in a demo: the plan
+needs to be picked up-front without friction or payment, stay consistent between
+the marketing page and the wizard, and persist so nothing is lost on Back.
+
+### Files
+- New: `src/constants/pricing.ts`, `src/store/onboarding-store.ts`,
+  `src/components/pricing/{plan-badge,pricing-feature-list,pricing-toggle,pricing-plan-card,pricing-cta,upgrade-confirmation-modal}.tsx`,
+  `src/components/onboarding/{onboarding-progress,onboarding-plan-step}.tsx`,
+  `src/components/marketing/{marketing-nav,marketing-footer}.tsx`,
+  `src/app/(onboarding)/{layout.tsx,onboarding/page.tsx}`,
+  `src/app/(marketing)/pricing/page.tsx`
+- Edited: `src/app/(marketing)/page.tsx` (shared nav/footer, CTAs - `/onboarding`),
+  `src/app/(auth)/register/page.tsx` (success - `/onboarding`)
+
+### Verification
+| Check | Result |
+| --- | --- |
+| `npx eslint` on all pricing/onboarding/marketing files + register page | 0 problems (1 pre-existing react-hook-form warning) |
+| `npm run build` | compiled, TypeScript passed, 25 routes (includes /pricing and /onboarding) |
+
+---
+
+## 25. In-app plan upgrade & management (2026-09-09)
+
+**Requested:** Add an upgrade-plan option inside the app so users can change the
+plan after signup, using the live paid-plan offer - $14.99/month billed monthly
+with the full feature list, the 2%-10% referral commission and the "Soon"
+roadmap items.
+
+**Fix - Pro offer updated** (`src/constants/pricing.ts`)
+- monthly note is now "Billed monthly" and the Pro feature list matches the live
+  offer: Browse & Trade Markets, Create Markets, Join Groups, Pulse (Social
+  Feed), Leaderboards, Pro Badge (verified checkmark), Invite & Earn (2%-10%
+  commission).
+- added `highlights` (renders "Up to 10% commission" as a gradient chip) and
+  `soon` (Advanced Analytics, AI Market Insights, Whale Alerts, Advanced Charts,
+  Creator Dashboard, API Access) fields to the config - one source of truth, so
+  every surface stays in sync.
+
+**Fix - shared PlanSelector** (`src/components/pricing/plan-selector.tsx`)
+- Extracted the billing toggle + Free/Pro cards + upgrade-confirmation logic
+  (canceling the modal reverts to the previously selected plan) so onboarding
+  and Settings share one implementation instead of duplicating it.
+
+**Fix - change the plan after signup** (`/settings`)
+- New "Plan & Billing" card (`id="plan"`) shows the current plan and price, the
+  billing-cycle toggle and both plan cards; switching plan fires a demo toast,
+  and Pro still routes through the confirmation modal.
+- The Connected Account card now shows the real plan (Free/Pro) instead of the
+  placeholder "Standard".
+
+**Fix - discovery entry points**
+- Sidebar gained a plan teaser card - gradient "Upgrade to Pro" while on Free,
+  "Pro is active" once upgraded - linking to `/settings#plan`.
+- Profile menu gained an "Upgrade to Pro" / "Manage Pro" item.
+
+**Fix - shared updates everywhere**
+- `PricingPlanCard` and `UpgradeConfirmationModal` now render highlights and the
+  muted "Coming soon" list (PricingSoonList), so /pricing and onboarding show
+  the same offer as Settings.
+
+**Why:** Onboarding picks the plan only once; after signup there was no way to
+change it, and the paid offer printed on the pricing pages no longer matched
+the live product.
+
+### Files
+- New: `src/components/pricing/pricing-soon-list.tsx`,
+  `src/components/pricing/plan-selector.tsx`
+- Edited: `src/constants/pricing.ts`,
+  `src/components/pricing/pricing-plan-card.tsx`,
+  `src/components/pricing/upgrade-confirmation-modal.tsx`,
+  `src/components/onboarding/onboarding-plan-step.tsx`,
+  `src/app/(dashboard)/settings/page.tsx`,
+  `src/components/layout/sidebar.tsx`,
+  `src/components/layout/profile-menu.tsx`
+
+### Verification
+| Check | Result |
+| --- | --- |
+| `npx eslint` on all touched files | 0 problems |
+| `npm run build` | compiled, TypeScript passed, 25 routes |
+
+---
+
+## 26. Plan downgrade guard + duplicate toast fix (2026-09-09)
+
+**Requested:** If a user is already on the paid plan they must not be able to
+switch back to Free, and a single event was producing two notifications.
+
+**Fix 1 - no downgrade from Pro** (`src/components/pricing/plan-selector.tsx`,
+`src/components/pricing/pricing-plan-card.tsx`)
+- While `plan === "PRO"` the Free card is now `disabled`: its CTA is
+  non-interactive with a lock icon, the whole card is no longer selectable, and
+  `chooseFree` carries a safety guard so the plan can never be reset to FREE
+  (this also protects the onboarding plan step, which shares the component).
+
+**Fix 2 - double toast on a single click** (`src/components/layout/profile-menu.tsx`)
+- The "Exit Demo" menu item called `setTradingMode("REAL")` - which already
+  fires `toast.info("Live mode is simulated")` inside `app-store.ts` - and then
+  fired a second `toast.info("Switched to Real mode")` of its own. One click
+  showed two toasts. The redundant local toast was removed, so switching modes
+  notifies exactly once from every entry point (profile menu and Settings).
+
+**Why:** Free stays a one-way upgrade decision in the demo, and notifications
+must map one-to-one to user actions.
+
+### Files
+- Edited: `src/components/pricing/plan-selector.tsx`,
+  `src/components/pricing/pricing-plan-card.tsx`,
+  `src/components/layout/profile-menu.tsx`
+
+### Verification
+| Check | Result |
+| --- | --- |
+| `npx eslint` on the three touched files | 0 problems |
+| `npm run build` | compiled, TypeScript passed, 25 routes |
+
+---
+
+## 27. Editable profile: Settings now actually saves (2026-09-09)
+
+**Requested:** The username in Settings looked editable but could not be
+changed - saving only fired a toast and never persisted, because identity was
+hardcoded to the MOCK_CURRENT_USER constant and reused across the app.
+
+**Fix - single persisted identity store** (new src/store/user-store.ts)
+- New persisted Zustand store (omx-user) holding displayName, username,
+  email, io and derived initials; initialised from MOCK_CURRENT_USER
+  and updated through setProfile (recomputes initials from displayName).
+- Settings -> Profile form now reads its defaultValues from the store and
+  onSave calls store.setProfile(...) + a single "Profile updated" toast, so
+  edits survive reloads. The avatar next to the form uses stored initials.
+- ProfileMenu (header avatar, name, @handle) now renders the stored profile
+  instead of MOCK_CURRENT_USER, so a saved username shows immediately.
+- Onboarding wizard writes the Profile step into the same store (besides its own
+  copy) and prefills from it, so a fresh onboarding sets the real identity.
+- Social composer avatar uses stored initials/displayName.
+
+**Why:** Settings look like they save but don't; identity must be one source of
+truth shared by onboarding and the dashboard chrome.
+
+### Files
+- New: src/store/user-store.ts
+- Edited: src/app/(dashboard)/settings/page.tsx,
+  src/components/layout/profile-menu.tsx,
+  src/app/(onboarding)/onboarding/page.tsx,
+  src/app/(dashboard)/social/page.tsx
+
+### Verification
+| Check | Result |
+| --- | --- |
+| 
+px eslint on all touched files | 0 errors (2 pre-existing Image alt warnings in social/page.tsx) |
+| 
+pm run build | compiled, TypeScript passed, 25 routes |
+
+---
+
+## 28. Messages & Notifications header interactions (2026-09-09)
+
+**Requested:** Clicking the bell was supposed to open a usable notifications
+experience, and the message icon was a stub that just pushed to /social with a
+toast. The task: make both header icons real � a full "Notifications" page
+(with working filters, a summary sidebar and mark-as-read) and a full
+"Messages" experience (conversation list -> select -> chat -> send), all
+desktop/tablet/mobile responsive, sharing state so header badges never drift
+from the pages. Screens also show a vertical Feedback tab and a floating
+support chat button, which the app did not have.
+
+**Fix 1 - shared notification state** (new
+src/store/notifications-store.ts, persisted omx-notifications) - a single
+source of truth: 
+otifications[], load(), markAsRead(), markAllAsRead(),
+and a derived selectUnreadCount. The header bell badge, the bell dropdown
+preview and the /notifications page all read the same store, so marking read
+anywhere updates the badge everywhere. Data loads once through
+
+otificationsService (mockRequest), structured like a real API (loading
+skeletons + ErrorState with retry).
+
+- New richer mock src/mocks/notifications.ts; the old array moved out of
+  social.ts and 
+otificationService re-pointed. NotificationItem gained a
+  required category (TRADE/SOCIAL/REWARD/ANNOUNCEMENT/SYSTEM) + optional
+  metadata, and an "announcement" type was added.
+- EmptyState now accepts a custom icon, so the page shows the exact
+  "No notifications here / Check back later" state from the spec.
+
+**Fix 2 - notifications UI** - /notifications page with real tabs (All /
+Trades / Social / Rewards / Announcements / System) using Radix tabs + proper
+tabpanel semantics; clicking a tab filters the store data live. Right rail has
+a live **Notification Summary** (Unread / Trades / Social / System, all derived
+from the feed) and a **Manage Notifications** card linking to /settings.
+"Mark all as read" appears only while unread > 0. Notification rows mark read
+on click and navigate by type (markets / leaderboard / social / settings).
+The header NotificationsMenu was refactored to the store, keeps its preview
+dropdown and adds a "View all notifications" footer -> /notifications.
+
+**Fix 3 - messages feature** (new src/store/messages-store.ts, persisted
+omx-messages, src/services/messages.service.ts, src/mocks/messages.ts) -
+New Conversation / Message types. ConversationList (searchable sidebar),
+ConversationView (chat header + scrollable bubbles + composer), reusable
+MessageBubble / MessageComposer. Composer: Enter/button sends, empties are
+prevented, input clears, timestamps show, sent messages appear instantly via
+store, thread auto-scrolls.
+
+- Header MessageCircle now routes to /messages and shows the shared unread
+  badge (selectUnreadCount); opening a conversation marks it read and the
+  badge updates everywhere. Added Messages entry to the sidebar nav.
+- /messages layout: 340px | rest grid on desktop; mobile swaps between the
+  list and the conversation with a back button. "Select a conversation" empty
+  panel + per-conversation unread badges matched to the spec screenshots.
+
+**Fix 4 - global widgets the screens needed** - new FeedbackTab (fixed
+vertical right tab -> feedback modal with type + message, submits a toast) and
+SupportChatButton (floating bottom-right chat dialog with canned replies),
+both shared components rendered on the Notifications and Messages pages. No
+duplicate widgets; both use the Radix Modal so Escape/click-outside close them.
+
+**Why:** The header icons looked present but lead nowhere; notifications had no
+page/filters and unread state could diverge; messages didn't exist. Both
+features are now stateful, persisted, responsive and consistent (one store per
+domain, badges derived from the same data).
+
+### Files
+- New: src/mocks/notifications.ts, src/mocks/messages.ts,
+  src/services/notifications.service.ts, src/services/messages.service.ts,
+  src/store/notifications-store.ts, src/store/messages-store.ts,
+  src/components/notifications/{notification-utils.ts,notification-item.tsx,notification-summary.tsx},
+  src/components/messages/{conversation-item.tsx,conversation-list.tsx,conversation-view.tsx,message-bubble.tsx,message-composer.tsx},
+  src/components/support/{feedback-tab.tsx,support-chat-button.tsx},
+  src/app/(dashboard)/notifications/page.tsx,
+  src/app/(dashboard)/messages/page.tsx
+- Edited: src/types/index.ts, src/mocks/social.ts,
+  src/services/domain.service.ts, src/components/ui/empty-state.tsx,
+  src/components/layout/notifications-menu.tsx,
+  src/components/layout/header.tsx,
+  src/components/layout/nav-icons.tsx, src/constants/index.ts
+
+### Verification
+| Check | Result |
+| --- | --- |
+| 
+px eslint . (whole project) | 0 errors (only pre-existing warnings: watch()-based forms, input VariantProps, auth/wallet service unused params, social Image alt, check-lucide script) |
+| 
+pm run build | compiled, TypeScript passed, 27 routes (added /messages + /notifications) |
+| 
+ode .check-lucide.mjs | all runtime icons exist (type-only LucideIcon reported as missing is the pre-existing type-import pattern, not a runtime import) |

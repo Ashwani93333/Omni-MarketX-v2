@@ -8,6 +8,7 @@ import { MarketCard } from "@/components/market/market-card";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CATEGORIES } from "@/constants";
 import { groups } from "@/mocks/groups";
 import { searchUsers } from "@/mocks/social";
 import { marketService } from "@/services/market.service";
@@ -36,7 +37,16 @@ export function SearchResults({ query }: { query: string }) {
       )
     : [];
 
-  const empty = !isLoading && !data?.length && !matchedUsers.length && !matchedGroups.length;
+  const matchedCategories: string[] = q
+    ? CATEGORIES.filter((c) => c.toLowerCase().includes(q.toLowerCase()))
+    : [];
+
+  const empty =
+    !isLoading &&
+    !data?.length &&
+    !matchedCategories.length &&
+    !matchedUsers.length &&
+    !matchedGroups.length;
 
   return (
     <div className="space-y-6">
@@ -105,6 +115,35 @@ export function SearchResults({ query }: { query: string }) {
               <div className="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 {data.map((market) => (
                   <MarketCard key={market.id} market={market} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {matchedCategories.length > 0 && (
+            <section>
+              <h2 className="text-base font-bold text-text-primary">
+                Events ({matchedCategories.length})
+              </h2>
+              <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {matchedCategories.map((c) => (
+                  <Link
+                    key={c}
+                    href={`/markets?category=${encodeURIComponent(c)}`}
+                    className="flex items-center gap-3 rounded-[16px] border border-border bg-surface px-4 py-3.5 transition-all hover:border-primary/40 hover:shadow-[var(--shadow-sm)]"
+                  >
+                    <span className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-primary-light text-primary">
+                      <SearchIcon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold text-text-primary">
+                        {c} events
+                      </span>
+                      <span className="block truncate text-xs text-text-muted">
+                        Browse all {c} markets
+                      </span>
+                    </span>
+                  </Link>
                 ))}
               </div>
             </section>
