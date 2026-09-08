@@ -467,3 +467,42 @@ Points summary and a responsive card grid. Reachable from the profile menu
 
 ### 10.6 Still to build (P1)
 Open Orders, Market Heatmap. (Trading Analytics + Achievements — done.)
+
+---
+
+## 11. Feature roadmap — P1 batch 4: Market Heatmap + Open Orders
+
+### 11.1 Open Orders
+**Files:** `src/types/index.ts` (`OpenOrder`), `src/store/orders-store.ts`,
+`src/components/orders/open-orders-card.tsx`
+
+Persisted orders store (`omx-open-orders`) seeded with two demo limit orders. Card on
+the **Portfolio** rail lists each order (YES/NO side pill, limit/type + relative time,
+market link, price, shares, cancel button → toast). Empty state explains limit orders
+land here.
+
+### 11.2 Market Heatmap
+**Files:** `src/components/heatmap/market-heatmap.tsx`,
+`src/app/(dashboard)/heatmap/page.tsx`
+
+Full-page grid of every open market grouped by category. Cells are color-coded by
+**probability** (5-bucket scale: 0–30 red → 70%+ green) or **24h change**, sortable by
+Volume / Newest / Probability, with legend, category headers, and hover lift. Clicking a
+cell opens the market. New sidebar nav entry "Heatmap" (`LayoutGrid`) under Markets.
+
+### 11.3 Verification
+| Check | Result |
+| --- | --- |
+| `npx eslint <changed files>` | 0 problems |
+| `npm run build` | ✓ Compiled (5.4s) · ✓ TypeScript passed · ✓ new `/heatmap` route (23 total) |
+
+### 11.4 Still to build (P1)
+None — P1 roadmap complete.
+
+---
+
+## 12. Feature roadmap — P2 (deferred)
+
+Per the P2 spec: social profiles with identity/token badges, notifications with
+per-settings, DM inbox, fiat payments (Stripe/Plaid), SDK/API docs, copy-trade
+autotrading. Not started.

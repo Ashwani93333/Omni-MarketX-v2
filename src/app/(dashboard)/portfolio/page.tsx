@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { TradingAnalytics } from "@/components/analytics/trading-analytics";
 import { PageHeader } from "@/components/layout/page-header";
+import { OpenOrdersCard } from "@/components/orders/open-orders-card";
 import { PositionCard } from "@/components/portfolio/position-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -110,6 +111,7 @@ export default function PortfolioPage() {
       </div>
 
       <aside className="space-y-5">
+        <OpenOrdersCard />
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-[15px]">Recent Demo Trades</CardTitle>

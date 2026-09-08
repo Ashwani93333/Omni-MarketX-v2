@@ -261,3 +261,14 @@ export interface Achievement {
   points: number;
   unlockDate?: string;
 }
+
+export interface OpenOrder {
+  id: string;
+  marketId: string;
+  marketTitle: string;
+  side: "YES" | "NO";
+  type: "LIMIT" | "MARKET";
+  price: number;
+  shares: number;
+  placedAt: string;
+}

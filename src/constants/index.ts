@@ -6,6 +6,7 @@ export const NAV_ITEMS = [
   { label: "Home", href: "/home", icon: "Home" },
   { label: "Wallet", href: "/wallet", icon: "Wallet" },
   { label: "Markets", href: "/markets", icon: "ChartLine" },
+  { label: "Heatmap", href: "/heatmap", icon: "LayoutGrid" },
   { label: "Trending", href: "/trending", icon: "TrendingUp" },
   { label: "Activity", href: "/activity", icon: "Activity" },
   { label: "Leaderboard", href: "/leaderboard", icon: "Trophy" },
