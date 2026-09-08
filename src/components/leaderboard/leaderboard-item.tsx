@@ -1,5 +1,7 @@
 import { TrendingDown, TrendingUp, Minus } from "lucide-react";
+import Link from "next/link";
 
+import { FollowButton } from "@/components/social/follow-button";
 import { Avatar } from "@/components/ui/avatar";
 import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -54,24 +56,34 @@ export function LeaderboardItem({
         {rank}
       </span>
 
-      <Avatar
-        size="sm"
-        src={user.avatarUrl}
-        initials={user.initials}
-        alt={user.displayName}
-      />
+      <Link
+        href={`/users/${user.id}`}
+        className="flex min-w-0 flex-1 items-center gap-3"
+      >
+        <Avatar
+          size="sm"
+          src={user.avatarUrl}
+          initials={user.initials}
+          alt={user.displayName}
+        />
 
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-text-primary">
-          {user.displayName}
-          {highlighted ? (
-            <span className="ml-2 rounded-md bg-primary px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
-              You
-            </span>
-          ) : null}
-        </p>
-        <p className="number-tight text-xs text-text-muted">{trades} trades</p>
-      </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-text-primary transition-colors hover:text-primary">
+            {user.displayName}
+            {highlighted ? (
+              <span className="ml-2 rounded-md bg-primary px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
+                You
+              </span>
+            ) : null}
+          </p>
+          <p className="number-tight text-xs text-text-muted">{trades} trades</p>
+        </div>
+      </Link>
+
+      <FollowButton
+        userId={user.id}
+        className={cn("hidden shrink-0 md:inline-flex", highlighted && "pointer-events-none opacity-0")}
+      />
 
       <span className="hidden sm:block">
         <ChangeIcon

@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Gift, Trophy, TrendingUp } from "lucide-react";
+import Link from "next/link";
 
 import { LeaderboardItem } from "@/components/leaderboard/leaderboard-item";
 import { PageHeader } from "@/components/layout/page-header";
@@ -187,13 +188,15 @@ export default function LeaderboardPage() {
               <ul className="space-y-2">
                 {rising.map((entry) => (
                   <li key={entry.id} className="flex items-center gap-2.5 rounded-lg px-2 py-2">
-                    <Avatar size="sm" initials={entry.user.initials} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-text-primary">
-                        {entry.user.displayName}
-                      </p>
-                      <p className="text-xs text-text-muted">@{entry.user.username}</p>
-                    </div>
+                    <Link href={`/users/${entry.user.id}`} className="flex min-w-0 flex-1 items-center gap-2.5">
+                      <Avatar size="sm" initials={entry.user.initials} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-text-primary">
+                          {entry.user.displayName}
+                        </p>
+                        <p className="text-xs text-text-muted">@{entry.user.username}</p>
+                      </div>
+                    </Link>
                     <span className="number-tight text-sm font-bold text-success">
                       +{entry.change}
                     </span>

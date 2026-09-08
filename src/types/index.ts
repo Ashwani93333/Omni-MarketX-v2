@@ -201,3 +201,29 @@ export interface MarketAlert {
   threshold: number;
   createdAt: string;
 }
+
+export interface TraderPosition {
+  id: string;
+  marketId: string;
+  marketTitle: string;
+  side: "YES" | "NO";
+  price: number;
+  shares: number;
+  pnl: number;
+}
+
+export interface TraderProfile {
+  id: string;
+  user: User;
+  bio: string;
+  memberSince: string;
+  stats: {
+    roi: number;
+    profit: number;
+    trades: number;
+    winRate: number;
+    followers: number;
+    following: number;
+  };
+  recentPositions: TraderPosition[];
+}

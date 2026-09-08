@@ -377,3 +377,52 @@ renders `MarketAlertsCard` (below market stats).
 ### 8.9 Still to build (P1)
 Open Orders, Trader Profiles, Follow Traders, Trading Analytics, Achievements,
 Market Heatmap. (Order Book, Recent Trades, Market Discussion, Market Alerts — done.)
+
+---
+
+## 9. Feature roadmap — P1 batch 2: Trader Profiles + Follow Traders
+
+### 9.1 Types + shared helpers
+**Files:** `src/types/index.ts`, `src/mocks/market-activity.ts`
+
+Added `TraderPosition` and `TraderProfile` types. Exported `hashString`/`createRng`
+from `market-activity.ts` so other mocks reuse the deterministic PRNG.
+
+### 9.2 Trader data
+**Files:** `src/mocks/traders.ts`, `src/services/trader.service.ts`
+
+`traderProfiles` covers the current user, all `socialUsers`, and all 8 leaderboard
+users (leaderboard rows reuse their real ROI/profit/trades). Each profile has a bio,
+member-since date, stats (ROI, P&L, win rate, trades, followers, following), and 3
+recent positions linked to real markets. `traderService.getTraderProfile(userId)`
+throws for unknown ids → ErrorState.
+
+### 9.3 Follow state + button
+**Files:** `src/store/follow-store.ts`, `src/components/social/follow-button.tsx`
+
+Persisted Zustand store (`omx-follows`) of followed user ids. `FollowButton` toggles
+Follow ↔ Following (with check icon) and `aria-pressed`.
+
+### 9.4 Trader profile page
+**Files:** `src/app/(dashboard)/users/[userId]/page.tsx`, `trader-profile-client.tsx`
+
+New dynamic route `/users/[userId]` (async server page + client component). Header card
+(avatar, name, @username, member-since, bio, "You" badge for self, Follow button),
+4-stat grid (ROI, Profit, Win Rate, Trades), follower/following counters, and a
+"Recent Positions" card linking to each market with YES/NO pill, size, price, P&L.
+
+### 9.5 Profile links wired in
+- `leaderboard-item.tsx` — avatar+name link to `/users/{id}`; follow button on ≥md rows
+- `leaderboard/page.tsx` — "Fastest Rising" list links to profiles
+- `recent-trades.tsx` (market detail) — trader avatar/@username link to profiles
+- `activity-item.tsx` — display name links to profiles
+
+### 9.6 Verification
+| Check | Result |
+| --- | --- |
+| `npx eslint <changed files>` | 0 errors |
+| `npm run build` | ✓ Compiled (5.5s) · ✓ TypeScript passed · ✓ new `/users/[userId]` route |
+
+### 9.7 Still to build (P1)
+Open Orders, Trading Analytics, Achievements, Market Heatmap.
+(Trader Profiles + Follow Traders — done.)

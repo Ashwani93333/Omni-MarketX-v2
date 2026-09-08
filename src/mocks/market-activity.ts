@@ -6,7 +6,7 @@ import type {
 
 import { socialUsers } from "./social";
 
-function hashString(s: string): number {
+export function hashString(s: string): number {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) {
     h ^= s.charCodeAt(i);
@@ -15,7 +15,7 @@ function hashString(s: string): number {
   return Math.abs(h);
 }
 
-function createRng(seed: number) {
+export function createRng(seed: number) {
   let state = seed || 1;
   return () => {
     state = (Math.imul(state, 1664525) + 1013904223) >>> 0;

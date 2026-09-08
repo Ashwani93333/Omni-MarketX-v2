@@ -5,6 +5,7 @@ import {
   MessageCircle,
   TrendingUp,
 } from "lucide-react";
+import Link from "next/link";
 
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -31,9 +32,12 @@ export function ActivityItem({ post }: { post: ActivityPost }) {
       />
       <div className="min-w-0 flex-1">
         <p className="text-sm leading-relaxed text-text-secondary">
-          <strong className="font-semibold text-text-primary">
+          <Link
+            href={`/users/${post.user.id}`}
+            className="font-semibold text-text-primary transition-colors hover:text-primary"
+          >
             {post.user.displayName}
-          </strong>{" "}
+          </Link>{" "}
           {post.action}{" "}
           {post.market ? (
             post.marketId ? (
