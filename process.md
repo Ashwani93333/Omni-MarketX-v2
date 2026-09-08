@@ -31,6 +31,7 @@ All changes are verified with:
 | 16 | P2 batch 4: Personalized Feed + Referral/Reward system | "For You" was a stub and the invite page was static â€” rebuilt both as stateful systems (finishes P2). |
 | 17 | P2 roadmap complete | Full differentiation scope shipped (Create Market intentionally skipped). |
 | 18 | Polish & bug-fix pass (2026-09-09) | Audit-driven fixes: negative NO price, trading on closed markets, profile 404s, fake search, unconfirmed destructive actions + a11y/CSS/perf nits (details below). |
+| 19 | Onboarding/landing page feature showcase (2026-09-09) | New users had no way to discover the 19 features built in P0-P2 â€” the hero/footer only described an anonymous "prediction market" (details below). |
 
 ---
 
@@ -865,3 +866,38 @@ deep-linked/opened-in-new-tab page there is no history, and the browser does not
 - Unify the duplicate trader identities between activity feed (`u-*`) and
   social/leaderboard (`s-*` / `u-l*`) mocks into a single id space (routes currently
   still resolve, just under two id sets).
+
+---
+
+## 19. Onboarding / landing page — feature showcase (2026-09-09)
+
+**File:** `src/app/(marketing)/page.tsx`
+
+**Why:** The landing page (the pre-login "onboarding" experience at `/`) only ever
+described a generic prediction market. Since P0-P2 shipped 19 real features (order
+book, AI assistant, copy trading, referral rewards, heatmap, reputation, etc.), new
+users had zero awareness of them — nothing told the user what they get for signing up.
+
+**Changes**
+- **New "Features" hero section** (`#features`): four grouped cards that mirror the
+  actual product under real names — **Trade & Analyze** (order book & trades, heatmap,
+  price alerts, open orders & analytics, rich market data), **AI Assistance** (assistant,
+  summaries, sentiment, news), **Social & Community** (personalized feed, discussion,
+  follow & watchlist, trader profiles & reputation, copy trading), **Earn & Level Up**
+  ($10K demo wallet, referral rewards, achievements, advanced leaderboards, activity
+  feed) — 19 feature tiles with icons + one-line explanations.
+- **Feature chips strip** beneath the grid ("Order book", "AI assistant",
+  "Personalized feed", "Copy trading", "Referral rewards", …) as a quick scanable list.
+- **"Who it's for" section** adding a third motivational CTA block (demo funds,
+  community groups, referral rewards) between features and the final CTA.
+- Hero badge/stat updated to "all features included" and "19 built-in features";
+  since the FAQ called for zero guessing, each chip/stat matches a real feature.
+- Header nav added a **Features** anchor; "How it works" steps gained small tags
+  (8 categories / 50¢-$1 payout / 24/7 trading) for extra information density.
+- Custom `CheckDot` inline SVG used for chip bullets (no new dependency).
+
+### Verification
+| Check | Result |
+| --- | --- |
+| `npx eslint src/app/(marketing)/page.tsx` | 0 problems |
+| `npm run build` | ? Compiled (11.3s) · ? TypeScript passed · ? 23 routes |
