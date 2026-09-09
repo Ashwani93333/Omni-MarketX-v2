@@ -122,6 +122,7 @@ export function OrderBookDepth({
   const spread = Math.max(0, bestAsk - bestBid);
   const bidDepth = bidSeries[bidSeries.length - 1]?.total ?? 0;
   const askDepth = askSeries[askSeries.length - 1]?.total ?? 0;
+  const maxDepth = Math.max(bidDepth, askDepth, 1);
 
   return (
     <div>
@@ -191,6 +192,7 @@ export function OrderBookDepth({
             <YAxis
               dataKey="total"
               type="number"
+              domain={[0, maxDepth * 1.05]}
               tickFormatter={(v: number) => formatCompactNumber(v)}
               tick={{ fontSize: 10, fill: "var(--text-muted)" }}
               axisLine={{ stroke: "var(--border-light)" }}

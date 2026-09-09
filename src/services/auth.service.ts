@@ -26,14 +26,14 @@ export const authService = {
     return { user: { email: input.email } };
   },
 
-  async forgotPassword(email: string): Promise<{ sent: boolean }> {
+  async forgotPassword(_email: string): Promise<{ sent: boolean }> {
     await mockRequest({ sent: true }, 750);
     return { sent: true };
   },
 
   async resetPassword(
-    token: string,
-    password: string
+    _token: string,
+    _password: string
   ): Promise<{ success: boolean }> {
     await mockRequest({ success: true }, 750);
     return { success: true };

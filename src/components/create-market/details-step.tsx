@@ -10,6 +10,7 @@ import {
   buttonVariants,
 } from "@/components/ui/button";
 import { FieldError, FieldLabel, Input, Textarea } from "@/components/ui/input";
+import { fileToDataUrl } from "@/lib/image";
 import { cn } from "@/lib/utils";
 import {
   MAX_DESCRIPTION_LENGTH,
@@ -59,7 +60,7 @@ export function DetailsStep({
     }
   };
 
-  const onImageFile = (file: File | undefined) => {
+  const onImageFile = async (file: File | undefined) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       toast.error("That file is not an image");
@@ -69,13 +70,13 @@ export function DetailsStep({
       toast.error("Image must be under 1.5 MB");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      update({ image: String(reader.result), imageName: file.name });
+    try {
+      const image = await fileToDataUrl(file, 800, 0.85);
+      update({ image, imageName: file.name });
       toast.success("Image added");
-    };
-    reader.onerror = () => toast.error("Could not read that image");
-    reader.readAsDataURL(file);
+    } catch {
+      toast.error("Could not read that image");
+    }
   };
 
   return (

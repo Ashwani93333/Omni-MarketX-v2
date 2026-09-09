@@ -250,10 +250,11 @@ export function MarketPriceChart({ probability }: { probability: number }) {
     setHover(null);
     setSelection(null);
     if (!drag?.moved) return;
-    const s = Math.min(drag.startIdx, drag.lastIdx);
-    const e = Math.max(drag.startIdx, drag.lastIdx);
-    if (e - s >= 2) {
-      setView({ range, start: s, end: e });
+    const windowStart = Math.min(drag.startIdx, drag.lastIdx);
+    const windowEnd = Math.max(drag.startIdx, drag.lastIdx);
+    if (windowEnd - windowStart >= 2) {
+      const baseStart = activeView?.start ?? 0;
+      setView({ range, start: baseStart + windowStart, end: baseStart + windowEnd });
     }
   };
 

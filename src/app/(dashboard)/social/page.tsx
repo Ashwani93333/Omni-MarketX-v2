@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
   Flame,
-  Image,
+  Image as ImageIcon,
   Smile,
   Sparkles,
   TrendingUp,
@@ -44,6 +44,7 @@ export default function SocialPage() {
   const [attachPoll, setAttachPoll] = useState(false);
   const initials = useUserStore((s) => s.initials);
   const displayName = useUserStore((s) => s.displayName);
+  const avatarUrl = useUserStore((s) => s.avatarUrl);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState<[string, string]>(["", ""]);
@@ -151,6 +152,7 @@ export default function SocialPage() {
 <Avatar
                 size="md"
                 initials={initials}
+                src={avatarUrl}
                 alt={displayName}
               />
             <div className="min-w-0 flex-1 space-y-3">
@@ -184,7 +186,7 @@ export default function SocialPage() {
                         : "hover:text-text-primary"
                     )}
                   >
-                    <Image className="h-4 w-4" />
+                    <ImageIcon className="h-4 w-4" />
                   </button>
                   <button
                     aria-label="Add poll"
@@ -236,7 +238,7 @@ export default function SocialPage() {
 
               {attachImage && (
                 <div className="flex items-center gap-2 rounded-[10px] border border-dashed border-border bg-background px-3 py-2 text-xs text-text-secondary">
-                  <Image className="h-4 w-4 text-text-muted" />
+                  <ImageIcon className="h-4 w-4 text-text-muted" />
                   An image will be attached to this post.
                   <button
                     type="button"

@@ -11,7 +11,7 @@ export const walletService = {
     return mockRequest(trades, 350);
   },
 
-  async placeTrade(input: {
+  async placeTrade(_input: {
     marketId: string;
     side: "YES" | "NO";
     amount: number;

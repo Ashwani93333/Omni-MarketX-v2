@@ -134,6 +134,12 @@
 @layer base {
   * {
     border-color: var(--border);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
   }
 
   html {
@@ -181,25 +187,13 @@
     background-image: var(--gradient-soft);
   }
 
-  /* Custom scrollbars */
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 9999px;
-  }
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
-  }
+  /* Custom scrollbars - hidden everywhere (wheel/touch/keyboard scrolling still works) */
+  .scrollbar-thin,
   .scrollbar-none {
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
+  .scrollbar-thin::-webkit-scrollbar,
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }

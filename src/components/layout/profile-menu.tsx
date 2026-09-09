@@ -55,12 +55,13 @@ export function ProfileMenu() {
   const displayName = useUserStore((s) => s.displayName);
   const username = useUserStore((s) => s.username);
   const initials = useUserStore((s) => s.initials);
+  const avatarUrl = useUserStore((s) => s.avatarUrl);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 rounded-full py-1 pl-1 pr-1.5 transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-          <Avatar size="sm" initials={initials} />
+          <Avatar size="sm" initials={initials} src={avatarUrl} />
           <span className="hidden items-center gap-1 text-sm font-semibold text-text-primary lg:flex">
             {username}
             <ChevronDown className="h-3.5 w-3.5 text-text-muted" />

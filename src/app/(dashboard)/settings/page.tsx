@@ -37,6 +37,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { getBillingDetails } from "@/constants/pricing";
+import { fileToDataUrl, MAX_IMAGE_BYTES } from "@/lib/image";
 import { useAppStore } from "@/store/app-store";
 import { useOnboardingStore } from "@/store/onboarding-store";
 import { useTradingStore } from "@/store/trading-store";
@@ -75,12 +76,37 @@ export default function SettingsPage() {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [confirmingReset, setConfirmingReset] = useState(false);
 
+  const handleAvatarFile = async (file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("That file is not an image");
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      toast.error("Image must be under 1.5 MB");
+      return;
+    }
+    setAvatarLoading(true);
+    try {
+      const dataUrl = await fileToDataUrl(file, 256, 0.85);
+      setProfile({ avatarUrl: dataUrl });
+      toast.success("Avatar updated", {
+        description: file.name,
+      });
+    } catch {
+      toast.error("Could not read that image");
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
+
   const billingDetails = getBillingDetails(plan, billingCycle);
   const userDisplayName = useUserStore((s) => s.displayName);
   const userUsername = useUserStore((s) => s.username);
   const userEmail = useUserStore((s) => s.email);
   const userBio = useUserStore((s) => s.bio);
   const userInitials = useUserStore((s) => s.initials);
+  const userAvatar = useUserStore((s) => s.avatarUrl);
   const setProfile = useUserStore((s) => s.setProfile);
 
   const defaultProfile = {
@@ -133,9 +159,10 @@ export default function SettingsPage() {
                 <Avatar
                   size="xl"
                   initials={userInitials}
+                  src={userAvatar}
                   alt={userDisplayName}
                 />
-                <div>
+                <div className="flex items-center gap-2">
                   <input
                     ref={avatarRef}
                     type="file"
@@ -143,15 +170,8 @@ export default function SettingsPage() {
                     className="hidden"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (!file) return;
-                      setAvatarLoading(true);
-                      setTimeout(() => {
-                        setAvatarLoading(false);
-                        toast.success("Avatar updated", {
-                          description: file.name,
-                        });
-                      }, 700);
                       e.target.value = "";
+                      handleAvatarFile(file);
                     }}
                   />
                   <Button
@@ -162,6 +182,18 @@ export default function SettingsPage() {
                   >
                     Change Avatar
                   </Button>
+                  {userAvatar ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setProfile({ avatarUrl: undefined });
+                        toast.success("Avatar removed");
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  ) : null}
                 </div>
               </div>
 

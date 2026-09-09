@@ -24,7 +24,9 @@ export const metadata: Metadata = {
   },
   description:
     "Discover prediction markets, trade YES/NO outcomes, and track a virtual portfolio. Trade on what you know.",
-  metadataBase: new URL("https://omnimarketx.example.com"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://omnimarketx.example.com"
+  ),
   openGraph: {
     title: "OmniMarketX — Social Prediction Markets",
     description:

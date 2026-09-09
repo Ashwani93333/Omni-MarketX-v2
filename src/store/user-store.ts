@@ -11,6 +11,7 @@ export interface UserProfile {
   email: string;
   bio: string;
   initials: string;
+  avatarUrl?: string;
 }
 
 interface UserState extends UserProfile {

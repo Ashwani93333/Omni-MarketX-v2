@@ -46,6 +46,8 @@ All changes are verified with:
 | 31 | Fix "Maximum update depth exceeded" from object-literal store selectors (2026-09-09) | Zustand selectors that built a new object/array every snapshot (onboarding + settings pages read `useUserStore` via `(state) => ({...})`) make `useSyncExternalStore` see a new value each render `" - the app looped into `Maximum update depth exceeded` at runtime. Both were split into individual scalar selectors (stable references), matching the app's single-field selector convention. Subtle: React Compiler only lint-flagged the onboarding instance, but the runtime crash could come from either (details below). |
 | 32 | Create Market flow (`/create-market`) (2026-09-09) | The app was trade-only - members could not create their own markets. Added a production-quality, front-end-only 4-step wizard (Question, Details, Resolution, Review & Publish) with live preview, a Market Quality Score, mock "Improve with AI", tag/image inputs, timezone-aware close dates, optional early resolution, auto-save + Save/Discard draft (localStorage `omx-market-draft`), confirm/success states with View Market + Copy Link + Share, and multi-outcome support in the persisted market store. Surfaced via sidebar, header Create button, and the /markets toolbar; created markets show a Community badge in cards + detail (details below). |
 | 33 | Advanced charts: market-detail price chart + order book depth (2026-09-09) | The market chart was a single view and the order book had no visual. Rebuilt `MarketPriceChart` as a pro-grade candlestick/line chart (deterministic OHLCV data, drag-to-zoom/double-click reset, crosshair + floating OHLC tooltip, volume bars, range change pill, resize-aware SVG) and added a new **Depth** tab with a cumulative Recharts depth chart (bid/ask curves + best-bid/ask/spread stat tiles) driven by the same order-book mock as the Order Book tab (details below). |
+| 34 | Live uploaded profile picture (2026-09-09) | The "Change Avatar" button in Settings only showed a toast - the picture never persisted or appeared anywhere. Uploads are now real (file -> dataURL, validated, stored in the persisted `omx-user` store) and the avatar updates live everywhere the current user appears: Settings, header profile menu, own trader profile (/users/user-me), market-discussion input + own comments, and the Social compose box (details below). Also hid all scrollbars app-wide (details below). |
+| 35 | Pre-deployment audit pass (2026-09-09) | Full audit before evaluation deploy. Found + fixed a real robustness bug: avatars and create-market covers were stored as full-size base64 dataURLs in localStorage (up to 1.5 MB each) against the shared ~5 MB origin quota - one big upload could wipe ALL persistence. Images are now compressed on upload via a shared `fileToDataUrl` helper (avatar 256px, cover 800px, JPEG ~few KB). Also made `metadataBase` env-configurable, renamed the lucide `Image` icon import (was triggering jsx-a11y alt-text warnings), cleaned 8 of 11 lint warnings via the `_`-prefix unused convention, and removed dead code (details below). |
 
 ---
 
@@ -176,14 +178,9 @@ Lint note: `setResults([])` was moved out of the effect body into the event hand
 
 ## 4. Pre-existing warnings (not blocking)
 
-The repo still has pre-existing ESLint warnings that were **not** introduced here and do not block the build:
-
-- `src/app/(dashboard)/groups/page.tsx` — **resolved**: unused imports (create-group modal scaffolding) were wired up; see section 6
-- `src/services/auth.service.ts`, `wallet.service.ts` — unused parameters
-- `src/components/ui/input.tsx` — unused `VariantProps` import
-- `src/components/theme-script.tsx` — unused eslint-disable directives
-- `src/app/(dashboard)/social/page.tsx` — two `<Image>` elements missing `alt` (jsx-a11y)
-- `react-hooks/incompatible-library` warnings on React Hook Form `useForm().watch()` usage (register, reset-password, trade-panel) — React Compiler skip notices, safe to ignore
+Mostly cleaned in §35. What remains is `react-hooks/incompatible-library` on React Hook
+Form `useForm().watch()` (register, reset-password, trade-panel) - React Compiler notices
+that skip memoization; runtime behavior is correct and these are no-ops to leave as-is.
 
 ---
 
@@ -1651,8 +1648,11 @@ real trading terminal without adding dependencies.
   clip so it never overflows on mobile.
 - **Drag-to-zoom:** pointer-capture drag over the chart selects a window (overlay rect);
   release zooms in. Double-click or the **Reset zoom** button restores full range. The
-  zoom window is keyed by `range` so changing time range never shows a stale window (also
-  satisfies `react-hooks/set-state-in-effect` - no effect-based reset state).
+  zoom window stores **absolute indices into the full candle array** (window-relative
+  drag indices are offset by the current view start), so repeated drags zoom deeper in
+  the same region instead of jumping to unrelated candles; the window is keyed by `range`
+  so changing time range never shows a stale window (also satisfies
+  `react-hooks/set-state-in-effect` - no effect-based reset state).
 - **Ranges + change pill:** 1H/24H/7D/30D/ALL chips, price shown next to the range's
   signed % change (green/red) so trend direction is readable at a glance; X labels switch
   to date format beyond 24H.
@@ -1672,7 +1672,9 @@ real trading terminal without adding dependencies.
 - **Stat tiles** above the chart: Bids depth + best bid, Spread + last price, Asks depth
   + best ask (cents, `formatCompactNumber` for depth).
 - `ReferenceLine` at the last price with a cents label, custom depth tooltip (side, price,
-  cumulative shares), skeleton and error states mirroring `OrderBook`.
+  cumulative shares), skeleton and error states mirroring `OrderBook`. Y-axis domain is
+  pinned to `[0, maxDepth * 1.05]` so the curves anchor to the baseline instead of being
+  auto-trimmed to the shallowest level.
 
 ### Verification
 | Check | Result |
@@ -1686,3 +1688,100 @@ real trading terminal without adding dependencies.
   a real feed would just swap the query source.
 - The custom SVG chart is the only fully-custom chart in the app; the portfolio equity
   curve keeps Recharts (fine for its single-area use case).
+
+---
+
+## 34. Live uploaded profile picture + hidden scrollbars (2026-09-09)
+
+### 34.1 Avatar upload now persists and updates live
+**Why:** The Settings "Change Avatar" button read a file, showed a toast, then threw the
+file away - the picture was never stored or rendered, so users could not change how they
+appear anywhere in the app.
+
+**Changes**
+- **Store:** `src/store/user-store.ts` - added `avatarUrl?: string` to `UserProfile`.
+  `setProfile` already spreads partial profiles so the value persists to localStorage
+  (`omx-user`); `resetProfile` clears it (falls back to initials).
+- **Settings:** `src/app/(dashboard)/settings/page.tsx` - the input handler now validates
+  (must be an image, under 1.5 MB like the Create Market cover), reads the file via
+  `FileReader.readAsDataURL`, persists it through `setProfile({ avatarUrl })`, and shows
+  the existing loading state. The profile card Avatar renders `src={avatarUrl}`, and a
+  **Remove** button appears when a photo is set (clears back to initials).
+- **Live surfaces** (all read the same persisted store, so one upload updates every avatar
+  in the same session and after refresh):
+  - header profile menu - `src/components/layout/profile-menu.tsx`
+  - own trader profile - `src/app/(dashboard)/users/[userId]/trader-profile-client.tsx`
+    (`isMe` overlays the store identity: avatar + display name + username + bio)
+  - market discussion - `src/components/market/market-discussion.tsx` (compose input and
+    the user's own posted comments carry the avatar via `author.avatarUrl`)
+  - social compose box - `src/app/(dashboard)/social/page.tsx`
+
+**Note:** The dataURL is stored in localStorage, which caps at ~5 MB - the 1.5 MB image
+limit keeps several edits/persisted drafts comfortably within that budget.
+
+### 34.2 Scrollbars hidden app-wide
+**Why:** Every scroll container showed a visible scrollbar (the `scrollbar-thin` 6px
+thumb and the native page scrollbar). The user asked for scrolling without visible bars.
+
+**Changes:** `src/app/globals.css` - global `* { scrollbar-width: none }` +
+`-ms-overflow-style: none` and `*::-webkit-scrollbar { display: none }` in `@layer base`
+cover the document and all inner containers; `.scrollbar-thin` was repurposed to hide
+(used by sidebar, messages, notifications, chat). Wheel, touch, and keyboard scrolling
+all still work.
+
+### Verification
+| Check | Result |
+| --- | --- |
+| eslint on changed files | 0 errors (only the 2 pre-existing social-page `alt` warnings) |
+| eslint . (whole project) | 0 errors (only 11 pre-existing warnings) |
+| npm run build | compiled, TypeScript passed, 28 routes |
+
+---
+
+## 35. Pre-deployment audit pass (2026-09-09)
+
+**Why:** The user is deploying for evaluation, so before shipping I ran a full audit
+against the evaluation criteria - looking for real bugs, quota/perf risks, dead code,
+warning debt, and polish issues rather than assuming the last feature pass was enough.
+
+### 35.1 localStorage quota bug (highest-value fix)
+**Problem:** A profile avatar was stored as a full-size base64 dataURL (up to 1.5 MB) in
+the persisted `omx-user` store. localStorage shares a **single ~5 MB quota per origin**
+across every persisted store (`omx-wallet`, `omx-trading`, `omx-messages`, drafts, etc.),
+so a user uploading one or two large photos could push the origin over quota - after which
+**every** `persist` write (orders, watchlist, theme, even the avatar itself) starts
+throwing `QuotaExceededError`. The Create Market draft had the identical risk (cover image
+up to 1.5 MB in `omx-market-draft`).
+**Fix:** New `src/lib/image.ts` - `fileToDataUrl(file, maxDimension, quality)` loads the
+image, downscales to the target size on a canvas (white-composited), and returns a JPEG
+dataURL. Avatar uploads use 256px/0.85 (~5-20 KB instead of up to 1.5 MB); market covers
+use 800px/0.85. Both call sites (Settings avatar, `details-step.tsx` cover) now share the
+helper, so the quota is never close to exceeded and the payload persisted per update is tiny.
+
+### 35.2 Deployment config
+- `src/app/layout.tsx`: `metadataBase` is now env-configurable via
+  `NEXT_PUBLIC_SITE_URL` (falls back to the placeholder), so OG/sitemap URLs point at the
+  real deployed origin.
+- Verified `npm run build` + `next start` surface (28 routes; dynamic routes are
+  on-demand SSR, static pages pre-rendered) - deploy-ready as-is, no API keys or env secrets
+  required since the app is fully mock-backed.
+
+### 35.3 Lint warning debt (11 -> 3)
+- `src/components/ui/input.tsx`: removed unused `VariantProps` import.
+- `src/services/auth.service.ts` / `wallet.service.ts`: mock params kept for API-shape
+  fidelity are now `_`-prefixed.
+- `.check-lucide.mjs`: removed dead `createRequire` line.
+- `eslint.config.mjs`: added the `^_` args/vars/caught ignore patterns - a standard
+  convention, so intentional unused mock params no longer produce warnings.
+- `src/app/(dashboard)/social/page.tsx`: aliased the lucide `Image` icon to `ImageIcon` -
+  the rule flags any component by that name as a missing-`alt` `<img>`; these are
+  decorative buttons already labeled with `aria-label`.
+- Remaining 3 warnings are React Compiler notices about `react-hook-form` `watch()` and
+  are runtime-correct no-ops (documented in §4).
+
+### 35.4 Verification
+| Check | Result |
+| --- | --- |
+| eslint . (whole project) | 0 errors, 3 warnings (compiler notices only) |
+| npm run build | compiled, TypeScript passed, 28 routes |
+| Debug/TODO scan | no `console.*`, `debugger`, `TODO`/`FIXME`, `href="#"` in src/ |

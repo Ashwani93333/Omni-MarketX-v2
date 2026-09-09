@@ -19,6 +19,7 @@ import { MOCK_CURRENT_USER } from "@/constants";
 import { formatRelativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { marketService } from "@/services/market.service";
+import { useUserStore } from "@/store/user-store";
 import type { MarketDiscussionComment } from "@/types";
 
 export function MarketDiscussion({ marketId }: { marketId: string }) {
@@ -26,6 +27,8 @@ export function MarketDiscussion({ marketId }: { marketId: string }) {
     queryKey: ["discussion", marketId],
     queryFn: () => marketService.getMarketDiscussion(marketId),
   });
+
+  const currentAvatar = useUserStore((s) => s.avatarUrl);
 
   const [mine, setMine] = useState<MarketDiscussionComment[]>([]);
   const [likedIds, setLikedIds] = useState<string[]>([]);
@@ -46,6 +49,7 @@ export function MarketDiscussion({ marketId }: { marketId: string }) {
           username: MOCK_CURRENT_USER.username,
           displayName: MOCK_CURRENT_USER.displayName,
           initials: MOCK_CURRENT_USER.initials,
+          avatarUrl: currentAvatar,
         },
         content,
         time: new Date().toISOString(),
@@ -74,7 +78,11 @@ export function MarketDiscussion({ marketId }: { marketId: string }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handlePost} className="flex items-center gap-2">
-          <Avatar size="sm" initials={MOCK_CURRENT_USER.initials} />
+          <Avatar
+            size="sm"
+            initials={MOCK_CURRENT_USER.initials}
+            src={currentAvatar}
+          />
           <Input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -119,7 +127,7 @@ export function MarketDiscussion({ marketId }: { marketId: string }) {
               const liked = likedIds.includes(c.id);
               return (
                 <li key={c.id} className="flex gap-3">
-                  <Avatar size="sm" initials={c.author.initials} />
+                  <Avatar size="sm" initials={c.author.initials} src={c.author.avatarUrl} />
                   <div className="min-w-0 flex-1 rounded-[12px] bg-background px-3.5 py-2.5">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                       <span className="text-xs font-bold text-text-primary">

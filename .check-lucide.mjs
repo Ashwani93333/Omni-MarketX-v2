@@ -1,8 +1,5 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
-import { createRequire } from "node:module";
-
-const require = createRequire(import.meta.url);
 
 function walk(d, l = []) {
   for (const f of readdirSync(d)) {

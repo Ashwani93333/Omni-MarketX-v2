@@ -21,10 +21,16 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { traderService } from "@/services/trader.service";
 import { useFollowStore } from "@/store/follow-store";
+import { useUserStore } from "@/store/user-store";
 
 export function TraderProfileClient({ userId }: { userId: string }) {
   const router = useRouter();
   const followedIds = useFollowStore((s) => s.followedIds);
+  const selfAvatar = useUserStore((s) => s.avatarUrl);
+  const selfDisplayName = useUserStore((s) => s.displayName);
+  const selfUsername = useUserStore((s) => s.username);
+  const selfInitials = useUserStore((s) => s.initials);
+  const selfBio = useUserStore((s) => s.bio);
 
   const { data: profile, isLoading, isError, refetch } = useQuery({
     queryKey: ["trader", userId],
@@ -49,6 +55,16 @@ export function TraderProfileClient({ userId }: { userId: string }) {
   }
 
   const isMe = profile.id === MOCK_CURRENT_USER.id;
+  const user = isMe
+    ? {
+        ...profile.user,
+        displayName: selfDisplayName,
+        username: selfUsername,
+        initials: selfInitials,
+        avatarUrl: selfAvatar ?? undefined,
+      }
+    : profile.user;
+  const bio = isMe && selfBio ? selfBio : profile.bio;
   const followers =
     profile.stats.followers +
     (followedIds.includes(profile.id) && !isMe ? 1 : 0);
@@ -86,11 +102,11 @@ export function TraderProfileClient({ userId }: { userId: string }) {
       <Card>
         <CardContent className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-4">
-            <Avatar size="xl" initials={profile.user.initials} />
+            <Avatar size="xl" initials={user.initials} src={user.avatarUrl} />
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-2xl font-bold tracking-tight text-text-primary">
-                  {profile.user.displayName}
+                  {user.displayName}
                 </h1>
                 {isMe && (
                   <span className="rounded-md bg-primary px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
@@ -99,11 +115,11 @@ export function TraderProfileClient({ userId }: { userId: string }) {
                 )}
               </div>
               <p className="mt-0.5 text-sm text-text-muted">
-                @{profile.user.username} · Member since{" "}
+                @{user.username} · Member since{" "}
                 {formatDate(profile.memberSince)}
               </p>
               <p className="mt-2 max-w-lg text-sm leading-relaxed text-text-secondary">
-                {profile.bio}
+                {bio}
               </p>
             </div>
           </div>
