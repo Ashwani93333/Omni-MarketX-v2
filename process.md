@@ -42,6 +42,9 @@ All changes are verified with:
 | 27 | Editable profile: Settings now actually saves (2026-09-09) | The username in Settings looked editable but saving only fired a toast - added a single persisted identity store (`omx-user`) that Settings writes to and header/onboarding/social read from, so edits persist everywhere (details below). |
 | 28 | Messages & Notifications header interactions (2026-09-09) | The header message icon was a stub that redirected to /social and notifications only existed as a dropdown with no page - built a real `/messages` experience and a `/notifications` page, backed by two shared persisted stores so header badges unread counts match the pages, plus Feedback tab + floating support chat on both pages (details below). |
 | 29 | Market trade panel redesigned to spec card (2026-09-09) | The market-detail order card used YES/NO buttons + a plain amount field. Rebuilt it to the reference "Buy/Sell" card: Buy/Sell tabs, YES/NO price chips (93.5&#162; / 6.5&#162;), balance line, quick-amount chips (5/10/20/40/Custom), a min/max rule ($10 - $5000), and an order summary (Shares approx, Est. Payout/Credit, Fees @ 0.2%, Est. Total, Potential Profit). Selling is now real: `sellPosition` credits the balance and reduces/removes held shares, with "no/in-sufficient shares" guards (details below). |
+| 30 | Invite page "Upgrade to Pro" redirects to the Pro plan (2026-09-09) | The invite/referral card's Upgrade button only flipped a private `referral-store.pro` flag (a duplicate of the real plan). It now redirects to the actual Plan & Billing section (`/settings#plan`) - same entry point as the sidebar/profile menu - and the page's 2x/reward state is derived from the true plan (`onboarding-store`), so upgrading in Settings reflects on the invite page (details below). |
+| 31 | Fix "Maximum update depth exceeded" from object-literal store selectors (2026-09-09) | Zustand selectors that built a new object/array every snapshot (onboarding + settings pages read `useUserStore` via `(state) => ({...})`) make `useSyncExternalStore` see a new value each render `" - the app looped into `Maximum update depth exceeded` at runtime. Both were split into individual scalar selectors (stable references), matching the app's single-field selector convention. Subtle: React Compiler only lint-flagged the onboarding instance, but the runtime crash could come from either (details below). |
+| 32 | Create Market flow (`/create-market`) (2026-09-09) | The app was trade-only - members could not create their own markets. Added a production-quality, front-end-only 4-step wizard (Question, Details, Resolution, Review & Publish) with live preview, a Market Quality Score, mock "Improve with AI", tag/image inputs, timezone-aware close dates, optional early resolution, auto-save + Save/Discard draft (localStorage `omx-market-draft`), confirm/success states with View Market + Copy Link + Share, and multi-outcome support in the persisted market store. Surfaced via sidebar, header Create button, and the /markets toolbar; created markets show a Community badge in cards + detail (details below). |
 
 ---
 
@@ -1463,3 +1466,154 @@ Shares/Payout/Fees/Total/Profit breakdown that makes the trade math visible.
 | --- | --- |
 | eslint\n trade-panel.tsx + trading-store.ts | 0 errors (pre-existing React-Compiler watch() warning on trade-panel, same pattern already in the repo) |
 | npm run build | compiled, TypeScript passed |
+
+---
+
+## 30. Invite page "Upgrade to Pro" redirects to the Pro plan (2026-09-09)
+
+**What:** The invite/referral page's "Upgrade to Pro" button no longer fakes an
+activation - it now redirects to the real plan management area, and the page's
+Pro state reads from the actual plan.
+
+**Why:** "Upgrade to Pro" on the invite card only flipped a private
+`referral-store.pro` boolean, which was a duplicate source of truth disconnected
+from the user's real plan (driven by `onboarding-store`, used by the sidebar,
+profile menu and Settings). A persisted `pro:false` could hide 2x rewards even
+after the user genuinely upgraded, and the button silently "activated" Pro
+without any plan change.
+
+### Details
+- The card's button now calls `router.push("/settings#plan")` - the same
+  destination as the sidebar "Upgrade to Pro" and the profile-menu "Upgrade to
+  Pro / Manage Pro". When Pro is active the card shows "Manage Plan" instead of
+  "Deactivate Pro" (downgrading to Free is intentionally locked once Pro is on).
+- The page derives `pro` from `useOnboardingStore((s) => s.plan === "PRO")`, so
+  per-friend payouts, milestone 2x values and the "Pro is Active" card all
+  reflect the true plan and update live after upgrading in Settings.
+- Removed the duplicate `pro`/`setPro` from `referral-store`; `addInvite` now
+  takes `pro` from the caller. (Persisted `omx-referrals` old flag is ignored.)
+
+### Files
+- Edited: src/app/(dashboard)/invite/page.tsx, src/store/referral-store.ts,
+  process.md (this section)
+
+### Verification
+| Check | Result |
+| --- | --- |
+| eslint invite/page.tsx + referral-store.ts | 0 errors |
+| npm run build | compiled, TypeScript passed |
+
+---
+
+## 31. Fix "Maximum update depth exceeded" from object-literal store selectors (2026-09-09)
+
+**What:** Two components read the persisted user store through a selector that
+built a brand-new object on every call
+(`useUserStore((state) => ({ displayName, username, email, ... }))`). With
+`useSyncExternalStore` (what Zustand v5 uses under the hood) a selector result
+is only accepted as unchanged when `Object.is` says so - so every render saw a
+"changed" snapshot and React re-rendered forever, surfacing as
+`Maximum update depth exceeded` at runtime.
+
+**Why:** The app's convention is one scalar per `useStore` selector. Object/array
+shorthand selectors are silently dangerous: the compiler lint only flagged the
+onboarding instance (that is what the previously reported `getSnapshot should be
+cached` warning pointed at), while the settings page had the exact same defect
+and could throw the same runtime loop.
+
+### Details
+- `src/app/(onboarding)/onboarding/page.tsx` (getSnapshot warning): split the
+  object selector into `useUserStore((s) => s.displayName)` /
+  `s.username` / `s.email` and used those in the three `useState` initialisers.
+- `src/app/(dashboard)/settings/page.tsx` (same defect, caught by a repo-wide
+  grep): the Settings form defaults and avatar now come from five scalar
+  selectors (`userDisplayName`, `userUsername`, `userEmail`, `userBio`,
+  `userInitials`); the `useForm` `defaultValues` object is plain render-time
+  data (never a selector snapshot, so it is safe).
+- Repo-wide sweep confirmed no other store selector builds an object/array
+  (`grep` over all `use*Store(` call sites).
+
+### Files
+- Edited: src/app/(onboarding)/onboarding/page.tsx,
+  src/app/(dashboard)/settings/page.tsx, process.md (this section)
+
+### Verification
+| Check | Result |
+| --- | --- |
+| eslint onboarding + settings pages | 0 errors |
+| eslint . (whole project) | 0 errors (only pre-existing warnings) |
+| npm run build | compiled, TypeScript passed |
+
+---
+
+## 32. Create Market flow (`/create-market`) (2026-09-09)
+
+**What:** The app let users trade markets but not create them. Added a
+front-end-only, API-ready Create Market experience built on the existing design
+system, stores, and `marketService.mockRequest` pattern.
+
+**Why:** The spec's P1 differentiation list includes community-created markets
+("Create Market intentionally skipped" in row 17) and this task asked for it as a
+polished, mock-backed feature - no backend, but shaped so a real API can be
+slotted in later without touching the UI.
+
+### Details
+- **Route & nav:** new `src/app/(dashboard)/create-market/page.tsx` renders the
+  wizard; entry points are a **Create Market** sidebar item (`PlusSquare`),
+  a **Create** header button (md+), and a **Create Market** button on the
+  `/markets` toolbar. The throwaway single-page `/create` attempt was deleted.
+- **Wizard (4 steps):**
+  1. **Question** - 160-char question with live counter, Yes/No vs Multiple
+     choice card selector (2-5 outcomes, add/remove), category chips, a mock
+     **Improve question with AI** button (spinner shimmer, rephrases to a
+     "Will … ?" form, toast with the result), and - for binary markets - a
+     **Starting probability** control (5-95% slider + number input, live
+     YES/NO cent preview); multiple-choice markets open evenly split.
+  2. **Details** - 500-char description, optional cover image (file → dataURL,
+     validated type + 1.5 MB cap, preview/Replace/Remove, `next/image`), and
+     tags (Enter/Add, dedupe, backspace-removes-last, max 8).
+  3. **Resolution** - resolution criteria, optional source URL (validated),
+     `datetime-local` close + timezone `Select`, and an early-resolution
+     toggle that reveals its own criteria input.
+  4. **Review & Publish** - live `MarketPreviewCard` (image, category, Community
+     badge, ProbabilityBar or outcome chips, tags, formatted close), a
+     resolution-plan / publishing-details summary, a confirm `Modal`, and a
+     success screen (View Market, Copy Link, Share on X, Create another).
+- **Live Market Quality Score:** rendered in a sticky aside on every step; 7
+  checks (question/category/description/criteria/source/tags/future close) →
+  0-100 with Excellent/Good/Fair/Needs-work labels and a colored ProgressBar.
+- **Draft persistence:** auto-saves to `localStorage: omx-market-draft` (600 ms
+  debounce) with a "Saved at HH:MM" indicator, an explicit Save draft button,
+  and a Discard path. Draft hydrates on revisit; validation guards stale data.
+- **Publishing:** builds a `CreateMarketInput` and calls the existing
+  `marketService.createMarket` (mock 600 ms) which now supports MULTI markets
+  (equal-probability outcomes), a creator-set starting probability (binary:
+  YES opens at `p`¢, NO at `100-p`¢), and optional `image/tags/sourceUrl/
+  earlyResolution/timezone` fields, returning a persisted `Market`
+  (`source: "community"`, `creator: "user-me"`).
+- **Community badge:** `market-card.tsx` and the market-detail header show a
+  Community pill when `market.source === "community"`, so created markets are
+  visibly distinct from seeded ones and still render the chart/detail (chart is
+  probability-driven, no mock dependency).
+- **Responsive:** 2-col grid (`form 1fr + sticky aside 320px`) collapses to a
+  single column on mobile; step labels hide below `sm` (OnboardingProgress shows
+  "Step X of 4").
+
+### Files
+- New: src/components/create-market/create-market.types.ts, market-quality-score.tsx,
+  market-preview-card.tsx, question-step.tsx, details-step.tsx, resolution-step.tsx,
+  review-step.tsx, create-market-wizard.tsx, src/app/(dashboard)/create-market/page.tsx
+- Edited: src/types/index.ts (Market image/tags/sourceUrl/earlyResolution/timezone),
+  src/store/market-store.ts (CreateMarketInput + MULTI/extras),
+  src/constants/index.ts + src/components/layout/nav-icons.tsx (nav item),
+  src/components/layout/header.tsx (Create button),
+  src/app/(dashboard)/markets/markets-browser.tsx (toolbar button),
+  src/components/market/market-card.tsx + [marketId]/market-detail-client.tsx (Community badge)
+- Deleted: src/app/(dashboard)/create/page.tsx
+
+### Verification
+| Check | Result |
+| --- | --- |
+| eslint on new/changed files | 0 errors, 0 warnings |
+| eslint . (whole project) | 0 errors (only 11 pre-existing warnings) |
+| npm run build | compiled, TypeScript passed, 28 routes incl. `/create-market` |

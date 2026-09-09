@@ -77,23 +77,20 @@ const seedInvites: ReferralInvite[] = [
 ];
 
 interface ReferralState {
-  pro: boolean;
   invites: ReferralInvite[];
-  setPro: (pro: boolean) => void;
   addInvite: (invite: {
     name: string;
     initials: string;
     date: string;
+    pro: boolean;
   }) => void;
 }
 
 export const useReferralStore = create<ReferralState>()(
   persist(
     (set) => ({
-      pro: false,
       invites: seedInvites,
-      setPro: (pro) => set({ pro }),
-      addInvite: ({ name, initials, date }) =>
+      addInvite: ({ name, initials, date, pro }) =>
         set((s) => ({
           invites: [
             {
@@ -101,7 +98,7 @@ export const useReferralStore = create<ReferralState>()(
               name,
               initials,
               date,
-              reward: s.pro ? REFERRAL_BASE_REWARD * 2 : REFERRAL_BASE_REWARD,
+              reward: pro ? REFERRAL_BASE_REWARD * 2 : REFERRAL_BASE_REWARD,
               status: "pending",
             },
             ...s.invites,

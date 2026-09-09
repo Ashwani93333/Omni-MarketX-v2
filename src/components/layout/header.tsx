@@ -1,6 +1,7 @@
 "use client";
 
-import { Menu, MessageCircle } from "lucide-react";
+import { Menu, MessageCircle, PlusSquare } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { GlobalSearch } from "@/components/layout/global-search";
@@ -36,6 +37,14 @@ export function Header() {
       <GlobalSearch />
 
       <div className="ml-auto flex items-center gap-2.5">
+        <Link
+          href="/create-market"
+          className="hidden items-center gap-1.5 rounded-[10px] bg-primary px-3 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-primary-hover md:inline-flex"
+        >
+          <PlusSquare className="h-4 w-4" />
+          Create
+        </Link>
+
         <div
           role="group"
           aria-label="Trading mode"

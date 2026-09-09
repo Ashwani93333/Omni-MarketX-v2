@@ -10,6 +10,7 @@ import {
   trendingMarkets,
 } from "@/mocks/markets";
 import { mockRequest } from "@/services/client";
+import { useMarketStore, type CreateMarketInput } from "@/store/market-store";
 import type {
   Market,
   MarketDiscussionComment,
@@ -23,9 +24,13 @@ export interface MarketFilters {
   sort?: string;
 }
 
+function allMarkets(): Market[] {
+  return [...useMarketStore.getState().created, ...markets];
+}
+
 export const marketService = {
   async getMarkets(filters?: MarketFilters): Promise<Market[]> {
-    let result = [...markets];
+    let result = allMarkets();
     const category = filters?.category;
     const search = filters?.search;
     const sort = filters?.sort;
@@ -69,7 +74,10 @@ export const marketService = {
   },
 
   async getMarket(id: string): Promise<Market> {
-    const market = getMarketById(id);
+    const created = useMarketStore
+      .getState()
+      .created.find((m) => m.id === id);
+    const market = created ?? getMarketById(id);
     if (!market) {
       throw new Error("Market not found");
     }
@@ -97,7 +105,7 @@ export const marketService = {
   async searchMarkets(query: string): Promise<Market[]> {
     const q = query.toLowerCase();
     return mockRequest(
-      markets
+      allMarkets()
         .filter(
           (m) =>
             m.title.toLowerCase().includes(q) ||
@@ -107,6 +115,11 @@ export const marketService = {
         .slice(0, 5),
       200
     );
+  },
+
+  async createMarket(input: CreateMarketInput): Promise<Market> {
+    const market = useMarketStore.getState().createMarket(input);
+    return mockRequest(market, 600);
   },
 
   async getOrderBook(

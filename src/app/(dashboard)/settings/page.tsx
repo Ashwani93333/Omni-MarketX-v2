@@ -76,14 +76,19 @@ export default function SettingsPage() {
   const [confirmingReset, setConfirmingReset] = useState(false);
 
   const billingDetails = getBillingDetails(plan, billingCycle);
-  const profile = useUserStore((s) => ({
-    displayName: s.displayName,
-    username: s.username,
-    email: s.email,
-    bio: s.bio,
-    initials: s.initials,
-  }));
+  const userDisplayName = useUserStore((s) => s.displayName);
+  const userUsername = useUserStore((s) => s.username);
+  const userEmail = useUserStore((s) => s.email);
+  const userBio = useUserStore((s) => s.bio);
+  const userInitials = useUserStore((s) => s.initials);
   const setProfile = useUserStore((s) => s.setProfile);
+
+  const defaultProfile = {
+    displayName: userDisplayName,
+    username: userUsername,
+    email: userEmail,
+    bio: userBio || "Trader. Learner. Occasionally early.",
+  };
 
   const {
     register,
@@ -91,12 +96,7 @@ export default function SettingsPage() {
     formState: { errors },
   } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      displayName: profile.displayName,
-      username: profile.username,
-      email: profile.email,
-      bio: profile.bio || "Trader. Learner. Occasionally early.",
-    },
+    defaultValues: defaultProfile,
   });
 
   const onSave = (values: ProfileForm) => {
@@ -132,8 +132,8 @@ export default function SettingsPage() {
               <div className="flex items-center gap-4">
                 <Avatar
                   size="xl"
-                  initials={profile.initials}
-                  alt={profile.displayName}
+                  initials={userInitials}
+                  alt={userDisplayName}
                 />
                 <div>
                   <input

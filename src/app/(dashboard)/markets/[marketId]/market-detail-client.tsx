@@ -20,6 +20,7 @@ import {
 } from "@/components/market/market-probability";
 import { MarketSentimentCard } from "@/components/market/market-sentiment";
 import { TradePanel } from "@/components/market/trade-panel";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
 import { Separator } from "@/components/ui/separator";
@@ -92,6 +93,11 @@ export function MarketDetailClient({ marketId }: { marketId: string }) {
               <div className="flex flex-wrap items-center gap-2">
                 <MarketCategoryChip category={market.category} />
                 <MarketStatusBadge status={market.status} />
+                {market.source === "community" ? (
+                  <Badge className="bg-primary-light text-primary">
+                    Community
+                  </Badge>
+                ) : null}
                 <FavoriteStar marketId={market.id} size="md" />
                 <span className="ml-auto">
                   <AiAssistantDialog market={market} />

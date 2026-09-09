@@ -46,19 +46,17 @@ function OnboardingWizard() {
   const toggleInterest = useOnboardingStore((state) => state.toggleInterest);
   const complete = useOnboardingStore((state) => state.complete);
   const setUserProfile = useUserStore((state) => state.setProfile);
-  const userProfile = useUserStore((state) => ({
-    displayName: state.displayName,
-    username: state.username,
-    email: state.email,
-  }));
+  const userDisplayName = useUserStore((state) => state.displayName);
+  const userUsername = useUserStore((state) => state.username);
+  const userEmail = useUserStore((state) => state.email);
 
   const [displayName, setDisplayName] = useState(
-    displayNameSaved || userProfile.displayName
+    displayNameSaved || userDisplayName
   );
   const [username, setUsername] = useState(
-    usernameSaved || userProfile.username
+    usernameSaved || userUsername
   );
-  const [email, setEmail] = useState(emailSaved || userProfile.email);
+  const [email, setEmail] = useState(emailSaved || userEmail);
   const [formErrors, setFormErrors] = useState<{
     displayName?: string;
     username?: string;

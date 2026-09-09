@@ -30,6 +30,14 @@ export function MarketCard({ market }: { market: Market }) {
               <Flame className="h-3 w-3" />
             </span>
           )}
+          {market.source === "community" && (
+            <span
+              className="rounded-full bg-primary-light px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary"
+              title="Community market"
+            >
+              Community
+            </span>
+          )}
           <FavoriteStar marketId={market.id} />
         </div>
       </div>

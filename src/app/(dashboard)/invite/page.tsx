@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 import { ReferralQr } from "@/components/invite/referral-qr";
 import { PageHeader } from "@/components/layout/page-header";
@@ -37,6 +38,7 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { StatCard } from "@/components/ui/stat-card";
 import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useOnboardingStore } from "@/store/onboarding-store";
 import {
   REFERRAL_BASE_REWARD,
   REWARD_MILESTONES,
@@ -48,10 +50,10 @@ const REFERRAL_CODE = "OMX-ALEXR-2026";
 const REFERRAL_LINK = "https://omnimarketx.example.com/?ref=ALEXR";
 
 export default function InvitePage() {
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
-  const pro = useReferralStore((s) => s.pro);
-  const setPro = useReferralStore((s) => s.setPro);
+  const pro = useOnboardingStore((s) => s.plan === "PRO");
   const invites = useReferralStore((s) => s.invites);
 
   const { friends, earned, pending } = referralTotals(invites);
@@ -337,22 +339,14 @@ export default function InvitePage() {
               <Button
                 variant="secondary"
                 className="w-full"
-                onClick={() => {
-                  setPro(false);
-                  toast.info("Pro plan deactivated");
-                }}
+                onClick={() => router.push("/settings#plan")}
               >
-                Deactivate Pro
+                Manage Plan
               </Button>
             ) : (
               <Button
                 className="w-full"
-                onClick={() => {
-                  setPro(true);
-                  toast.success("Welcome to Pro", {
-                    description: "2x referral rewards unlocked. Your next invite pays $50.",
-                  });
-                }}
+                onClick={() => router.push("/settings#plan")}
               >
                 Upgrade to Pro
               </Button>

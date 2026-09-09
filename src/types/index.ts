@@ -33,6 +33,13 @@ export interface Market {
   featured?: boolean;
   trend?: number[];
   priceChange24h?: number;
+  source?: "community";
+  creator?: string;
+  image?: string;
+  tags?: string[];
+  sourceUrl?: string;
+  earlyResolution?: boolean;
+  timezone?: string;
 }
 
 export interface Position {

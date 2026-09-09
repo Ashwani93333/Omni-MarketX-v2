@@ -1,7 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { LayoutGrid, List } from "lucide-react";
+import { LayoutGrid, List, PlusSquare } from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -9,6 +10,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { MarketCard } from "@/components/market/market-card";
 import { MarketCardSkeletonGrid } from "@/components/market/market-card-skeleton";
 import { MarketRow } from "@/components/market/market-row";
+import { buttonVariants } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
@@ -164,6 +166,14 @@ export function MarketsBrowser() {
               ))}
             </SelectContent>
           </Select>
+
+          <Link
+            href="/create-market"
+            className={buttonVariants({ variant: "outline-primary" })}
+          >
+            <PlusSquare className="h-4 w-4" />
+            Create Market
+          </Link>
         </div>
       </div>
 

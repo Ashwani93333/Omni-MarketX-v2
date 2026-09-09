@@ -15,6 +15,7 @@ export const NAV_ITEMS = [
   { label: "Groups", href: "/groups", icon: "UsersRound" },
   { label: "Portfolio", href: "/portfolio", icon: "Briefcase" },
   { label: "Watchlist", href: "/watchlist", icon: "Star" },
+  { label: "Create Market", href: "/create-market", icon: "PlusSquare" },
   { label: "Settings", href: "/settings", icon: "Settings" },
 ] as const;
 
