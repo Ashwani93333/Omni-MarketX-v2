@@ -3,8 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -12,6 +12,8 @@ import { z } from "zod";
 import { AuthCard } from "@/components/auth/auth-card";
 import { Button } from "@/components/ui/button";
 import { FieldError, FieldLabel, Input } from "@/components/ui/input";
+import { authService } from "@/services/auth.service";
+import { useAuthStore } from "@/store/auth-store";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -20,8 +22,9 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -35,11 +38,13 @@ export default function LoginPage() {
 
   const onSubmit = async (values: LoginForm) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 900));
+      await authService.login(values);
+      useAuthStore.getState().login();
       toast.success("Welcome back!", { description: "You're signed in." });
-      router.push("/home");
+      const redirect = searchParams.get("redirect");
+      const safeRedirect = redirect && redirect.startsWith("/") ? redirect : "/home";
+      router.replace(safeRedirect);
     } catch (error) {
-      void values;
       void error;
       toast.error("Sign in failed", {
         description: "Check your email and password and try again.",
@@ -114,5 +119,13 @@ export default function LoginPage() {
         </Link>
       </div>
     </AuthCard>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

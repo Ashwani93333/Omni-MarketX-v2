@@ -13,6 +13,8 @@ import { AuthCard } from "@/components/auth/auth-card";
 import { PasswordStrength } from "@/components/auth/password-strength";
 import { Button } from "@/components/ui/button";
 import { FieldError, FieldLabel, Input } from "@/components/ui/input";
+import { authService } from "@/services/auth.service";
+import { useAuthStore } from "@/store/auth-store";
 
 const registerSchema = z
   .object({
@@ -65,8 +67,13 @@ export default function RegisterPage() {
 
   const onSubmit = async (values: RegisterForm) => {
     try {
-      void values;
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await authService.register({
+        displayName: values.displayName,
+        username: values.username,
+        email: values.email,
+        password: values.password,
+      });
+      useAuthStore.getState().register();
       toast.success("Account created!", {
         description: "Welcome to OmniMarketX. You're all set to trade.",
       });

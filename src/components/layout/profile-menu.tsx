@@ -11,6 +11,7 @@ import {
   Trophy,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -21,10 +22,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+
 import { applyTheme, useAppStore } from "@/store/app-store";
+import { useAuthStore } from "@/store/auth-store";
 import { useOnboardingStore } from "@/store/onboarding-store";
 import { useUserStore } from "@/store/user-store";
-import { toast } from "sonner";
 
 function ThemeDropdownItem() {
   const theme = useAppStore((s) => s.theme);
@@ -49,6 +52,7 @@ function ThemeDropdownItem() {
 }
 
 export function ProfileMenu() {
+  const router = useRouter();
   const tradingMode = useAppStore((s) => s.tradingMode);
   const setTradingMode = useAppStore((s) => s.setTradingMode);
   const plan = useOnboardingStore((s) => s.plan);
@@ -56,6 +60,17 @@ export function ProfileMenu() {
   const username = useUserStore((s) => s.username);
   const initials = useUserStore((s) => s.initials);
   const avatarUrl = useUserStore((s) => s.avatarUrl);
+  const logout = useAuthStore((s) => s.logout);
+  const resetProfile = useUserStore((s) => s.resetProfile);
+  const resetOnboarding = useOnboardingStore((s) => s.reset);
+
+  const handleLogout = () => {
+    logout();
+    resetProfile();
+    resetOnboarding();
+    toast.success("Signed out", { description: "See you soon." });
+    router.push("/login");
+  };
 
   return (
     <DropdownMenu>
@@ -129,7 +144,7 @@ export function ProfileMenu() {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => toast.success("Signed out (demo)")}
+          onClick={handleLogout}
           className="text-danger hover:bg-danger-light focus:bg-danger-light focus:text-danger"
         >
           <LogOut className="h-4 w-4" />

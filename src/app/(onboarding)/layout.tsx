@@ -1,7 +1,9 @@
+import { AuthGuard } from "@/components/auth/auth-guard";
+
 export default function OnboardingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return <AuthGuard>{children}</AuthGuard>;
 }
