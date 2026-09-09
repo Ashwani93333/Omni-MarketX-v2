@@ -5,7 +5,7 @@ Audio reference: `OmniMarketX_Frontend_UI_UX_Specification.md` (the UI/UX spec t
 
 All changes are verified with:
 - `npm run lint` — clean on every touched file (0 errors)
-- `npm run build` — passes (TypeScript OK, all 25 routes generated)
+- `npm run build` — passes (TypeScript OK, all 28 routes generated)
 
 ---
 
@@ -45,6 +45,7 @@ All changes are verified with:
 | 30 | Invite page "Upgrade to Pro" redirects to the Pro plan (2026-09-09) | The invite/referral card's Upgrade button only flipped a private `referral-store.pro` flag (a duplicate of the real plan). It now redirects to the actual Plan & Billing section (`/settings#plan`) - same entry point as the sidebar/profile menu - and the page's 2x/reward state is derived from the true plan (`onboarding-store`), so upgrading in Settings reflects on the invite page (details below). |
 | 31 | Fix "Maximum update depth exceeded" from object-literal store selectors (2026-09-09) | Zustand selectors that built a new object/array every snapshot (onboarding + settings pages read `useUserStore` via `(state) => ({...})`) make `useSyncExternalStore` see a new value each render `" - the app looped into `Maximum update depth exceeded` at runtime. Both were split into individual scalar selectors (stable references), matching the app's single-field selector convention. Subtle: React Compiler only lint-flagged the onboarding instance, but the runtime crash could come from either (details below). |
 | 32 | Create Market flow (`/create-market`) (2026-09-09) | The app was trade-only - members could not create their own markets. Added a production-quality, front-end-only 4-step wizard (Question, Details, Resolution, Review & Publish) with live preview, a Market Quality Score, mock "Improve with AI", tag/image inputs, timezone-aware close dates, optional early resolution, auto-save + Save/Discard draft (localStorage `omx-market-draft`), confirm/success states with View Market + Copy Link + Share, and multi-outcome support in the persisted market store. Surfaced via sidebar, header Create button, and the /markets toolbar; created markets show a Community badge in cards + detail (details below). |
+| 33 | Advanced charts: market-detail price chart + order book depth (2026-09-09) | The market chart was a single view and the order book had no visual. Rebuilt `MarketPriceChart` as a pro-grade candlestick/line chart (deterministic OHLCV data, drag-to-zoom/double-click reset, crosshair + floating OHLC tooltip, volume bars, range change pill, resize-aware SVG) and added a new **Depth** tab with a cumulative Recharts depth chart (bid/ask curves + best-bid/ask/spread stat tiles) driven by the same order-book mock as the Order Book tab (details below). |
 
 ---
 
@@ -1617,3 +1618,71 @@ slotted in later without touching the UI.
 | eslint on new/changed files | 0 errors, 0 warnings |
 | eslint . (whole project) | 0 errors (only 11 pre-existing warnings) |
 | npm run build | compiled, TypeScript passed, 28 routes incl. `/create-market` |
+
+---
+
+## 33. Advanced charts: market price chart + order book depth (2026-09-09)
+
+**What:** The market-detail chart was a single Recharts area view tied to `probability`,
+and the order book was a text ladder only. Per the user's chosen scope, the price chart
+became a production-grade chart and the order book gained a visual depth curve.
+
+**Why:** "Market Chart" is a P0 feature and the trader-facing surface of the app - a
+single sparkline made it impossible to see OHLC, volume, or zoom/pan intraday trends,
+and the order book gave no sense of market thickness. Both were rebuilt to feel like a
+real trading terminal without adding dependencies.
+
+### Details (price chart)
+**File:** `src/components/market/market-chart.tsx` (rewritten, export + props unchanged
+`MarketPriceChart({ probability })`, consumer `market-detail-client.tsx` untouched)
+
+- **Deterministic OHLCV candles:** seeded LCG (`Math.imul` + count/price seed) pins each
+  (probability, range) to a stable series; last close snaps to the market probability.
+  Per-range volatility so 1H is calm and 30D/ALL drift more. No new deps - the existing
+  Recharts area was replaced with a **custom SVG chart** (canvas-style control, no
+  Recharts candle hacks).
+- **Candle / Line toggle:** candles draw wick + body (green `--success` up, red
+  `--danger` down); line mode draws the close line + gradient fill. Icon toggle keeps the
+  header tidy.
+- **Volume bars** under the price pane, sized to the visible max volume, colored by
+  direction, with compact 4-something tick labels.
+- **Crosshair:** hovering the plot shows a dashed vertical line, a dot on the close, and
+  a floating HTML tooltip (Open/High/Low/Close in cents + volume), clamped inside the
+  clip so it never overflows on mobile.
+- **Drag-to-zoom:** pointer-capture drag over the chart selects a window (overlay rect);
+  release zooms in. Double-click or the **Reset zoom** button restores full range. The
+  zoom window is keyed by `range` so changing time range never shows a stale window (also
+  satisfies `react-hooks/set-state-in-effect` - no effect-based reset state).
+- **Ranges + change pill:** 1H/24H/7D/30D/ALL chips, price shown next to the range's
+  signed % change (green/red) so trend direction is readable at a glance; X labels switch
+  to date format beyond 24H.
+- **Resize-aware:** ResizeObserver remeasures the container so paths/tooltips track real
+  pixel coordinates (no `viewBox` stretching).
+
+### Details (depth chart)
+**Files:** `src/components/market/order-book-depth.tsx` (new),
+`src/components/market/market-activity.tsx` (new **Depth** tab)
+
+- Reuses the exact same `marketService.getOrderBook(marketId, lastPrice)` query key as
+  the Order Book tab (shared caching, single source of truth).
+- Recharts `ComposedChart` with two **cumulative `Area` series** (per-series `data`
+  props): asks ascend from the best ask toward higher prices, bids ascend toward the best
+  bid (`[...bids].reverse()`), depths summing shares at each level. Success/​danger
+  gradients, monotone smoothing, animation off.
+- **Stat tiles** above the chart: Bids depth + best bid, Spread + last price, Asks depth
+  + best ask (cents, `formatCompactNumber` for depth).
+- `ReferenceLine` at the last price with a cents label, custom depth tooltip (side, price,
+  cumulative shares), skeleton and error states mirroring `OrderBook`.
+
+### Verification
+| Check | Result |
+| --- | --- |
+| eslint on new/changed files | 0 errors, 0 warnings |
+| eslint . (whole project) | 0 errors (only 11 pre-existing warnings) |
+| npm run build | compiled (6.3s), TypeScript passed, 28 routes |
+
+### Notes / follow-up
+- Depth data is still the deterministic 7x7 mock ladder (consistent with Order Book);
+  a real feed would just swap the query source.
+- The custom SVG chart is the only fully-custom chart in the app; the portfolio equity
+  curve keeps Recharts (fine for its single-area use case).
