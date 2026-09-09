@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Sora } from "next/font/google";
 
+import { AiChatbot } from "@/components/ai/ai-chatbot";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 import { ThemeScript } from "@/components/theme-script";
@@ -54,7 +55,10 @@ export default function RootLayout({
         <ThemeScript />
       </head>
       <body className="min-h-full bg-background font-sans">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <AiChatbot />
+        </Providers>
       </body>
     </html>
   );

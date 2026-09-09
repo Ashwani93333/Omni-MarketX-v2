@@ -20,6 +20,8 @@ import type {
   LeaderboardEntry,
   NotificationItem,
   Post,
+  Story,
+  StoryItem,
 } from "@/types";
 
 export const activityService = {
@@ -32,8 +34,36 @@ export const socialService = {
   async getPosts(): Promise<Post[]> {
     return mockRequest(posts, 350);
   },
-  async getStories() {
+  async getStories(): Promise<Story[]> {
     return mockRequest(stories, 200);
+  },
+  async createStory(item: Omit<StoryItem, "id" | "createdAt" | "viewers">): Promise<Story> {
+    const newItem: StoryItem = {
+      ...item,
+      id: `sti-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      viewers: [],
+    };
+    const existingMe = stories.find((s) => s.user.id === socialUsers[0].id);
+    if (existingMe) {
+      existingMe.items.push(newItem);
+      existingMe.hasStory = true;
+      return mockRequest(existingMe, 300);
+    }
+    const newStory: Story = {
+      id: `st-${Date.now()}`,
+      user: socialUsers[0],
+      hasStory: true,
+      seen: false,
+      items: [newItem],
+    };
+    stories.push(newStory);
+    return mockRequest(newStory, 300);
+  },
+  async markStorySeen(storyId: string): Promise<void> {
+    const story = stories.find((s) => s.id === storyId);
+    if (story) story.seen = true;
+    return mockRequest(undefined, 100);
   },
   async getComments(postId: string): Promise<Comment[]> {
     void postId;

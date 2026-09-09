@@ -359,3 +359,22 @@ export interface MarketNewsArticle {
   likes: number;
   comments: number;
 }
+
+export interface StoryItem {
+  id: string;
+  type: "image" | "text";
+  content?: string;
+  imageUrl?: string;
+  gradientFrom?: string;
+  gradientTo?: string;
+  createdAt: string;
+  viewers: string[];
+}
+
+export interface Story {
+  id: string;
+  user: User;
+  items: StoryItem[];
+  hasStory: boolean;
+  seen: boolean;
+}

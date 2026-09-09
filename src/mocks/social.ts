@@ -1,4 +1,4 @@
-import type { Comment, Post, User } from "@/types";
+import type { Comment, Post, Story, User } from "@/types";
 
 export const socialUsers: User[] = [
   {
@@ -252,36 +252,92 @@ export const searchUsers: User[] = [
   { id: "s-005", username: "riskqueen", displayName: "RiskQueen", initials: "RQ" },
 ];
 
-export const stories = [
+export const stories: Story[] = [
   {
     id: "st-001",
     user: socialUsers[0],
-    initials: "AR",
     hasStory: false,
+    seen: false,
+    items: [],
   },
   {
     id: "st-002",
     user: socialUsers[1],
-    initials: "MC",
     hasStory: true,
+    seen: false,
+    items: [
+      {
+        id: "sti-001",
+        type: "image",
+        imageUrl: "https://picsum.photos/seed/mia-crypto1/800/1400",
+        createdAt: "2026-09-09T08:30:00Z",
+        viewers: ["s-003", "s-004"],
+      },
+      {
+        id: "sti-002",
+        type: "text",
+        content: "BTC looking incredibly strong above $74K. Weekend close will be telling.",
+        gradientFrom: "#f21f68",
+        gradientTo: "#ff6b35",
+        createdAt: "2026-09-09T09:00:00Z",
+        viewers: ["s-003"],
+      },
+    ],
   },
   {
     id: "st-003",
     user: socialUsers[2],
-    initials: "KS",
     hasStory: true,
+    seen: false,
+    items: [
+      {
+        id: "sti-003",
+        type: "text",
+        content: "Just opened a new position on the AI chipmaker market. The Q4 guidance leak looks credible.",
+        gradientFrom: "#6366f1",
+        gradientTo: "#8b5cf6",
+        createdAt: "2026-09-09T07:15:00Z",
+        viewers: [],
+      },
+    ],
   },
   {
     id: "st-004",
     user: socialUsers[3],
-    initials: "NH",
     hasStory: false,
+    seen: true,
+    items: [],
   },
   {
     id: "st-005",
     user: socialUsers[4],
-    initials: "RQ",
     hasStory: true,
+    seen: false,
+    items: [
+      {
+        id: "sti-004",
+        type: "image",
+        imageUrl: "https://picsum.photos/seed/risk-queen1/800/1400",
+        createdAt: "2026-09-09T06:45:00Z",
+        viewers: ["s-001", "s-002"],
+      },
+      {
+        id: "sti-005",
+        type: "image",
+        imageUrl: "https://picsum.photos/seed/risk-queen2/800/1400",
+        createdAt: "2026-09-09T07:00:00Z",
+        viewers: ["s-001"],
+      },
+      {
+        id: "sti-006",
+        type: "text",
+        content: "Weekly P&L: +12.4%. Sticking to 2% risk per trade. Patience pays.",
+        gradientFrom: "#10b981",
+        gradientTo: "#059669",
+        createdAt: "2026-09-09T07:30:00Z",
+        viewers: [],
+      },
+    ],
   },
 ];
 

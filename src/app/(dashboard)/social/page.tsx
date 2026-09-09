@@ -16,6 +16,9 @@ import { toast } from "sonner";
 
 import { FollowButton } from "@/components/social/follow-button";
 import { PostCard } from "@/components/social/post-card";
+import { StoryBubbles } from "@/components/social/story-bubbles";
+import { StoryCreator } from "@/components/social/story-creator";
+import { StoryViewer } from "@/components/social/story-viewer";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +33,7 @@ import { socialService } from "@/services/domain.service";
 import { useFollowStore } from "@/store/follow-store";
 import { useUserStore } from "@/store/user-store";
 import { useWatchlistStore } from "@/store/watchlist-store";
-import type { Post, User } from "@/types";
+import type { Post, Story, StoryItem, User } from "@/types";
 
 const FEED_TABS = ["For You", "Following", "Top", "Latest"] as const;
 
@@ -69,6 +72,14 @@ export default function SocialPage() {
     queryFn: socialService.getSuggestedTraders,
   });
 
+  const { data: storiesData } = useQuery({
+    queryKey: ["social-stories"],
+    queryFn: socialService.getStories,
+  });
+
+  const [creatorOpen, setCreatorOpen] = useState(false);
+  const [viewingStory, setViewingStory] = useState<Story | null>(null);
+
   const createPost = useMutation({
     mutationFn: () => {
       const filled = pollOptions.filter((o) => o.trim());
@@ -93,6 +104,36 @@ export default function SocialPage() {
       toast.success("Post published");
     },
     onError: () => toast.error("Couldn\u2019t publish your post"),
+  });
+
+  const createStoryMutation = useMutation({
+    mutationFn: (item: Omit<StoryItem, "id" | "createdAt" | "viewers">) =>
+      socialService.createStory(item),
+    onSuccess: (story: Story) => {
+      queryClient.setQueryData<Story[]>(["social-stories"], (old) => {
+        if (!old) return [story];
+        const meIdx = old.findIndex((s) => s.user.id === REEL_KEY);
+        if (meIdx >= 0) {
+          const next = [...old];
+          next[meIdx] = story;
+          return next;
+        }
+        return [story, ...old];
+      });
+      toast.success("Story shared");
+    },
+    onError: () => toast.error("Couldn\u2019t share your story"),
+  });
+
+  const markSeenMutation = useMutation({
+    mutationFn: (storyId: string) => socialService.markStorySeen(storyId),
+    onSuccess: (_: void, storyId: string) => {
+      queryClient.setQueryData<Story[]>(["social-stories"], (old) =>
+        old
+          ? old.map((s) => (s.id === storyId ? { ...s, seen: true } : s))
+          : old
+      );
+    },
   });
 
   const feed = useMemo(() => {
@@ -146,6 +187,17 @@ export default function SocialPage() {
             Follow traders, share takes and join the conversation.
           </p>
         </div>
+
+        {storiesData && storiesData.length > 0 && (
+          <div className="rounded-[16px] border border-border bg-surface p-4">
+            <StoryBubbles
+              stories={storiesData}
+              currentUser={{ id: REEL_KEY, username: "alexriver", displayName: "Alex River", initials: "AR" }}
+              onAddStory={() => setCreatorOpen(true)}
+              onViewStory={setViewingStory}
+            />
+          </div>
+        )}
 
         <div className="rounded-[16px] border border-border bg-surface p-4">
           <div className="flex items-start gap-3">
@@ -450,6 +502,20 @@ export default function SocialPage() {
           </CardContent>
         </Card>
       </aside>
+
+      <StoryCreator
+        open={creatorOpen}
+        onOpenChange={setCreatorOpen}
+        onCreate={(item) => createStoryMutation.mutate(item)}
+      />
+
+      {viewingStory && (
+        <StoryViewer
+          story={viewingStory}
+          onClose={() => setViewingStory(null)}
+          onSeen={(id) => markSeenMutation.mutate(id)}
+        />
+      )}
     </div>
   );
 }
