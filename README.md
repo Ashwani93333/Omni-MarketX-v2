@@ -38,7 +38,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open https://omni-marketx-v2.vercel.app/.
 
 > The app is fully mock-backed — no API keys, env vars, or database are required.
 
